@@ -154,6 +154,58 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
     return result;
 }
 
+// Función para parsear secciones top-level del JSON preservando orden de aparición
+std::vector<std::pair<std::string, std::string>> ParseTopLevelSections(const std::string& json) {
+    std::vector<std::pair<std::string, std::string>> sections;
+    const char* str = json.c_str();
+    size_t len = strlen(str);
+    size_t pos = 0;
+    while (pos < len) {
+        // Skip whitespace
+        while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
+        if (pos >= len || str[pos] == '}') break;
+        if (str[pos] != '"') { ++pos; continue; }
+        size_t keyStart = pos + 1;
+        ++pos;
+        while (pos < len && str[pos] != '"') ++pos;
+        if (pos >= len) break;
+        std::string key = extractSubstring(str, keyStart, pos);
+        ++pos; // skip "
+        // Skip whitespace and :
+        while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
+        if (pos >= len || str[pos] != ':') { ++pos; continue; }
+        ++pos; // skip :
+        // Skip whitespace
+        while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
+        // Find end of value (handle {} or [])
+        size_t valueStart = pos;
+        if (str[pos] == '{' || str[pos] == '[') {
+            int braceCount = 1;
+            ++pos;
+            bool inString = false;
+            bool escape = false;
+            while (pos < len && braceCount > 0) {
+                if (str[pos] == '"' && !escape) inString = !inString;
+                else if (!inString) {
+                    if (str[pos] == '{' || str[pos] == '[') ++braceCount;
+                    else if (str[pos] == '}' || str[pos] == ']') --braceCount;
+                }
+                escape = (str[pos] == '\\' && !escape);
+                ++pos;
+            }
+        } else {
+            // Simple value, find , or }
+            while (pos < len && str[pos] != ',' && str[pos] != '}') ++pos;
+        }
+        std::string value = extractSubstring(str, valueStart, pos);
+        sections.emplace_back(key, value);
+        // Skip to next , or }
+        while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
+        if (pos < len && str[pos] == ',') ++pos;
+    }
+    return sections;
+}
+
 // Función para obtener la ruta de la carpeta "Documentos" del usuario
 std::string GetDocumentsPath() {
     wchar_t path[MAX_PATH];
@@ -242,6 +294,79 @@ std::string EscapeJson(const std::string& str) {
     return result;
 }
 
+// Función para pretty-print el JSON con indentación consistente
+std::string PrettyPrintJson(const std::string& json) {
+    std::string result;
+    std::vector<int> indentStack;
+    bool inString = false;
+    bool escape = false;
+    bool afterComma = true;
+    bool afterColon = false;
+    int currentIndent = 0;
+    size_t i = 0;
+    indentStack.push_back(0);
+    while (i < json.length()) {
+        char c = json[i];
+        if (inString) {
+            result += c;
+            if (c == '\\') {
+                escape = true;
+            } else if (c == '"' && !escape) {
+                inString = false;
+            }
+            escape = false;
+        } else {
+            if (c == '{' || c == '[') {
+                indentStack.push_back(currentIndent);
+                currentIndent += 2;
+                if (afterComma) {
+                    result += "\n";
+                    result += std::string(currentIndent, ' ');
+                } else {
+                    result += " ";
+                }
+                result += c;
+                afterComma = false;
+                afterColon = false;
+            } else if (c == '}' || c == ']') {
+                currentIndent = indentStack.back();
+                indentStack.pop_back();
+                result += "\n";
+                result += std::string(currentIndent, ' ');
+                result += c;
+                afterComma = true;
+                afterColon = false;
+            } else if (c == ',') {
+                result += c;
+                afterComma = true;
+                afterColon = false;
+            } else if (c == ':') {
+                result += ": ";
+                afterColon = true;
+                afterComma = false;
+            } else if (c == '"') {
+                inString = true;
+                result += c;
+                afterComma = false;
+                afterColon = false;
+            } else if (std::isspace(static_cast<unsigned char>(c))) {
+                if (afterColon && !inString) {
+                    // Skip space after colon
+                } else if (afterComma && !inString) {
+                    result += "\n";
+                    result += std::string(currentIndent, ' ');
+                }
+            } else {
+                result += c;
+                afterComma = false;
+                afterColon = false;
+            }
+        }
+        ++i;
+    }
+    return result;
+}
+
 // Función para parsear una línea del formato: key = textA|text1,text2|x
 ParsedRule ParseRuleLine(const std::string& key, const std::string& value) {
     ParsedRule rule;
@@ -323,7 +448,7 @@ std::string ReadCompleteJson(const fs::path& jsonPath,
     jsonFile.close();
 
     // Parsear los datos que necesitamos modificar preservando el orden
-    const std::set<std::string> validKeys = {
+    const std::vector<std::string> validKeys = {
         "npcFormID", "npc", "factionFemale", "factionMale",
         "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"
     };
@@ -391,75 +516,49 @@ std::string ReadCompleteJson(const fs::path& jsonPath,
 // Función MEJORADA para actualizar selectivamente el JSON existente preservando orden
 std::string UpdateJsonSelectively(const std::string& originalJson,
                                   const std::map<std::string, OrderedPluginData>& processedData) {
-    std::string result = originalJson;
-
-    const std::string topIndent = "  ";
-    const std::string innerIndent = "    ";
-    const std::set<std::string> validKeys = {
+    auto topSections = ParseTopLevelSections(originalJson);
+    std::stringstream result;
+    result << "{\n";
+    bool firstSection = true;
+    const std::vector<std::string> validKeys = {
         "npcFormID", "npc", "factionFemale", "factionMale",
         "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"
     };
-
-    for (const auto& key : validKeys) {
-        // Construir el nuevo contenido para esta clave preservando orden
-        std::stringstream newContent;
-        if (processedData.count(key) && !processedData.at(key).orderedData.empty()) {
+    for (const auto& [key, originalValue] : topSections) {
+        if (!firstSection) {
+            result << ",\n";
+        }
+        firstSection = false;
+        result << "  \"" << EscapeJson(key) << "\": ";
+        bool isValidKeyWithData = (std::find(validKeys.begin(), validKeys.end(), key) != validKeys.end() &&
+                                   processedData.count(key) && !processedData.at(key).orderedData.empty());
+        if (isValidKeyWithData) {
             const auto& data = processedData.at(key);
-            newContent << "\n" << innerIndent;
+            result << "{\n";
             bool first = true;
             for (const auto& [plugin, presets] : data.orderedData) {
                 if (!first) {
-                    newContent << ",\n" << innerIndent;
+                    result << ",\n";
                 }
                 first = false;
-                newContent << "\"" << EscapeJson(plugin) << "\": [ ";
+                result << "    \"" << EscapeJson(plugin) << "\": [\n";
                 bool firstPreset = true;
                 for (const auto& preset : presets) {
-                    if (!firstPreset) newContent << ", ";
+                    if (!firstPreset) {
+                        result << ",\n";
+                    }
                     firstPreset = false;
-                    newContent << "\"" << EscapeJson(preset) << "\"";
+                    result << "      \"" << EscapeJson(preset) << "\"";
                 }
-                newContent << " ]";
+                result << "\n    ]";
             }
-            newContent << "\n" << topIndent;
-        }
-        
-        // Buscar la posición exacta de esta clave en el JSON
-        size_t keyPos = result.find("\"" + key + "\"");
-        if (keyPos != std::string::npos) {
-            size_t colonPos = result.find(":", keyPos);
-            if (colonPos != std::string::npos) {
-                size_t openBrace = result.find("{", colonPos);
-                if (openBrace != std::string::npos) {
-                    // Encontrar el cierre correspondiente
-                    int braceCount = 1;
-                    size_t pos = openBrace + 1;
-                    size_t closeBrace = std::string::npos;
-                    
-                    while (pos < result.length() && braceCount > 0) {
-                        if (result[pos] == '{') braceCount++;
-                        else if (result[pos] == '}') {
-                            braceCount--;
-                            if (braceCount == 0) {
-                                closeBrace = pos;
-                                break;
-                            }
-                        }
-                        pos++;
-                    }
-                    
-                    if (closeBrace != std::string::npos) {
-                        // Reemplazar el contenido entre las llaves
-                        result = result.substr(0, openBrace + 1) + 
-                                newContent.str() + 
-                                result.substr(closeBrace);
-                    }
-                }
-            }
+            result << "\n  }";
+        } else {
+            result << originalValue;
         }
     }
-
-    return result;
+    result << "\n}";
+    return result.str();
 }
 
 // Función para actualizar el archivo INI con el nuevo conteo
