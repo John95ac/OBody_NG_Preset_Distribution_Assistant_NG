@@ -198,6 +198,10 @@ std::vector<std::pair<std::string, std::string>> ParseTopLevelSections(const std
             while (pos < len && str[pos] != ',' && str[pos] != '}') ++pos;
         }
         std::string value = extractSubstring(str, valueStart, pos);
+        // Inline rtrim for value to remove trailing whitespace
+        while (!value.empty() && (value.back() == '\n' || value.back() == '\r' || value.back() == ' ' || value.back() == '\t')) {
+            value.pop_back();
+        }
         sections.emplace_back(key, value);
         // Skip to next , or }
         while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
@@ -554,11 +558,20 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
             }
             result << "\n    }";
         } else {
-            result << originalValue;
+            std::string trimmedValue = originalValue;
+            // Inline rtrim for originalValue to remove trailing whitespace
+            while (!trimmedValue.empty() && (trimmedValue.back() == '\n' || trimmedValue.back() == '\r' || trimmedValue.back() == ' ' || trimmedValue.back() == '\t')) {
+                trimmedValue.pop_back();
+            }
+            result << trimmedValue;
         }
     }
-    result << "\n}";
-    return result.str();
+    std::string content = result.str();
+    // Inline rtrim for content to remove trailing whitespace before adding final \n}
+    while (!content.empty() && isspace(static_cast<unsigned char>(content.back()))) {
+        content.pop_back();
+    }
+    return content + "\n}";
 }
 
 // Función para actualizar el archivo INI con el nuevo conteo
