@@ -1,6 +1,6 @@
 # 📜 SKSE "OBody Preset Distribution Config Assistant NG"
 
-Es un DLL SKSE simple pero potente que procesa archivos de configuración de distribución de presets OBody desde INI, pareados a los SPID para gestionar los presets al JSON Master OBody_presetDistributionConfig.json de forma automática sin intervención directa. Fue creado con el objetivo de automatizar la aplicación de reglas de presets para el mod OBody en Skyrim Special Edition, el fin de esto es facilitar a los modders el poder entregar un OBody de sus personajes, y además agregar un preset por default el cual fácilmente los usuarios podrán cambiar si gustan desde su juego.
+It is a simple but powerful SKSE DLL that processes OBody preset distribution configuration files from INI, paired with SPID to manage presets to the Master OBody_presetDistributionConfig.json automatically without direct intervention. It was created with the objective of automating the application of preset rules for the OBody mod in Skyrim Special Edition, the purpose of this is to facilitate modders in delivering an OBody for their characters, and also adding a default preset which users can easily change from their game.
 
 ---
 
@@ -20,7 +20,25 @@ Console message on success: "OBody Assistant: Processed X files, applied Y rules
 
 That's all for now.
 
-That's all for now.
+## INI Rules Examples
+
+OBody_preset_Distribution_Config_Assistant-NG
+
+**Example of code designs:** It's very similar to SPID but shorter and simpler.
+
+```
+; npcFormID = xx0001|Preset,...|x or 1              FormID
+; npc = EditorID|Preset,...|x or 1                  EditorID name like 000Rabbit_NPC or Serana
+; factionFemale = Faction|Preset,...|x or 1         Faction name like "ImperialFaction" or "KhajiitFaction"
+; factionMale = Faction|Preset,...|x or 1
+; npcPluginFemale = Plugin.esp|Preset,...|x or 1        The name of the esp, who has a defined body
+; npcPluginMale = Plugin.esp|Preset,...|x or 1
+; raceFemale = Race|Preset,...|x or 1               Work with "NordRace", "OrcRace", "ArgonianRace", "HighElfRace", "WoodElfRace", "DarkElfRace", "BretonRace", "ImperialRace", "KhajiitRace", "RedguardRace", "ElderRace"  or  Works with custom races too
+; raceMale = Race|Preset,...|x or 1
+```
+
+More information about the JSON to which these adjustments are applied in the end is here:
+[https://www.nexusmods.com/skyrimspecialedition/articles/4756](https://www.nexusmods.com/skyrimspecialedition/articles/4756)
 
 # Acknowledgements
 
