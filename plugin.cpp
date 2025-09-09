@@ -529,7 +529,7 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
             result << ",\n";
         }
         firstSection = false;
-        result << "  \"" << EscapeJson(key) << "\": ";
+        result << "    \"" << EscapeJson(key) << "\": ";
         bool isValidKeyWithData = (std::find(validKeys.begin(), validKeys.end(), key) != validKeys.end() &&
                                    processedData.count(key) && !processedData.at(key).orderedData.empty());
         if (isValidKeyWithData) {
@@ -541,18 +541,18 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
                     result << ",\n";
                 }
                 first = false;
-                result << "    \"" << EscapeJson(plugin) << "\": [\n";
+                result << "        \"" << EscapeJson(plugin) << "\": [\n";
                 bool firstPreset = true;
                 for (const auto& preset : presets) {
                     if (!firstPreset) {
                         result << ",\n";
                     }
                     firstPreset = false;
-                    result << "      \"" << EscapeJson(preset) << "\"";
+                    result << "            \"" << EscapeJson(preset) << "\"";
                 }
-                result << "\n    ]";
+                result << "\n        ]";
             }
-            result << "\n  }";
+            result << "\n    }";
         } else {
             result << originalValue;
         }
