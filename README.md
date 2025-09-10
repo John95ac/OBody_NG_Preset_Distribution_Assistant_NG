@@ -6,39 +6,41 @@ It is a simple but powerful SKSE DLL that processes OBody preset distribution co
 
 # What does it do?
 
-Each time Skyrim is launched after data loaded, the DLL will scan the Data folder for OBody_PD_*.ini files, parse rules like key = plugin|presets|count, and apply them to OBody_presetDistributionConfig.json in SKSE/Plugins.
+Upon data loaded, scans Data for OBody_PD_*.ini files, parses rules (key = keyselec|presets|Mode), applies to OBody_presetDistributionConfig.json preserving order.
 
-The first action is to read existing JSON, preserve order of plugins and presets using manual parsing, then add new ones from INI rules without duplicates.
+Modes:
 
-For rules with count >0 or x (unlimited), add presets to sections like "npc", "raceFemale", etc. Update INI count to 0 after application. Skip if count=0.
+- " x " : Unlimited – adds presets to JSON every execution (does not change INI); if presets already exist in JSON, no changes are made.
+- " 1 " : Once – adds presets and updates INI to |0 (no further application); that is, the change is applied only once, then the INI deactivates itself.
+- " 0 " : No apply – skips the rule and logs "Skipped"; the INI is deactivated and no changes are made to the JSON.
+- " - " : Removes specific preset – searches with "!" (e.g., "!CCPoundcakeNaked2" removes "CCPoundcakeNaked2"), updates INI to |0.
+- "x- " : Removes specific preset every execution – (does not change INI); if presets already Removes, no changes are made.
+- " * " : Removes complete entry from the key (e.g., npc or race) – (e.g., "YurianaWench.esp" and presets), updates INI to |0.
+- " x* " : Removes complete entry from the key every execution– (does not change INI); if presets already Removes, no changes are made.
 
-If no existing JSON, create default structure. Update JSON selectively, preserving pretty-print format and non-modified sections.
+If JSON cannot be read (e.g., due to execution path discrepancy), process stops for stability to avoid CTD or problems.
 
-Log all processed files, rules applied/skipped, and summary in OBody_preset_Distribution_Config_Assistant-NG.log in Documents/My Games/Skyrim Special Edition/SKSE.
-
-Console message on success: "OBody Assistant: Processed X files, applied Y rules, skipped Z. JSON updated."
-
-That's all for now.
+Logs actions and summary in OBody_preset_Distribution_Config_Assistant-NG.log is in \Skyrim Special Edition\SKSE
 
 ## INI Rules Examples
 
-OBody_preset_Distribution_Config_Assistant-NG
-
-**Example of code designs:** It's very similar to SPID but shorter and simpler.
-
 ```
-; npcFormID = xx0001|Preset,...|x or 1              FormID
-; npc = EditorID|Preset,...|x or 1                  EditorID name like 000Rabbit_NPC or Serana
-; factionFemale = Faction|Preset,...|x or 1         Faction name like "ImperialFaction" or "KhajiitFaction"
-; factionMale = Faction|Preset,...|x or 1
-; npcPluginFemale = Plugin.esp|Preset,...|x or 1        The name of the esp, who has a defined body
-; npcPluginMale = Plugin.esp|Preset,...|x or 1
-; raceFemale = Race|Preset,...|x or 1               Work with "NordRace", "OrcRace", "ArgonianRace", "HighElfRace", "WoodElfRace", "DarkElfRace", "BretonRace", "ImperialRace", "KhajiitRace", "RedguardRace", "ElderRace"  or  Works with custom races too
-; raceMale = Race|Preset,...|x or 1
-```
+;OBody_preset_Distribution_Config_Assistant-NG
 
-More information about the JSON to which these adjustments are applied in the end is here:
-[https://www.nexusmods.com/skyrimspecialedition/articles/4756](https://www.nexusmods.com/skyrimspecialedition/articles/4756)
+;Example of code designs: it's very similar to SPID but shorter and simpler.
+
+; npcFormID = xx0001|Preset,...|x , 1 , 0 , - , *             FormID
+; npc = EditorID|Preset,...|x , 1 , 0 , - , *                    EditorID name like 000Rabbit_NPC or Serana
+; factionFemale = Faction|Preset,...|x , 1 , 0 , - , *           Faction name like "ImperialFaction" or "KhajiitFaction"
+; factionMale = Faction|Preset,...|x , 1 , 0 , - , *
+; npcPluginFemale = Plugin.esp|Preset,...|x , 1 , 0 , - , *       The name of the esp, who has a defined body
+; npcPluginMale = Plugin.esp|Preset,...|x , 1 , 0 , - , *
+; raceFemale = Race|Preset,...|x , 1 , 0 , - , *                Work with "NordRace", "OrcRace", "ArgonianRace", "HighElfRace", "WoodElfRace", "DarkElfRace", "BretonRace", "ImperialRace", "KhajiitRace", "RedguardRace", "ElderRace"  or  Works with custom races too
+; raceMale = Race|Preset,...|x , 1 , 0 , - , *
+
+; More information about the JSON that these adjustments are applied to in the end is here.
+; https://www.nexusmods.com/skyrimspecialedition/articles/4756
+```
 
 # Acknowledgements
 
