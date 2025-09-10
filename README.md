@@ -9,18 +9,19 @@ It is a simple but powerful SKSE DLL that processes OBody preset distribution co
 Upon data loaded, scans Data for OBody_PD_*.ini files, parses rules (key = keyselec|presets|Mode), applies to OBody_presetDistributionConfig.json preserving order.
 
 Modes:
-
-- " x " : Unlimited – adds presets to JSON every execution (does not change INI); if presets already exist in JSON, no changes are made.
-- " 1 " : Once – adds presets and updates INI to |0 (no further application); that is, the change is applied only once, then the INI deactivates itself.
-- " 0 " : No apply – skips the rule and logs "Skipped"; the INI is deactivated and no changes are made to the JSON.
+```
+- " x " : Unlimited – adds presets to JSON every execution (does not change INI); if already exist, no changes.
+- " 1 " : Once – adds presets, updates INI to |0 (applies only once, then deactivates).
+- " 0 " : No apply – skips rule and logs "Skipped"; INI deactivated, no JSON changes.
 - " - " : Removes specific preset – searches with "!" (e.g., "!CCPoundcakeNaked2" removes "CCPoundcakeNaked2"), updates INI to |0.
-- "x- " : Removes specific preset every execution – (does not change INI); if presets already Removes, no changes are made.
-- " * " : Removes complete entry from the key (e.g., npc or race) – (e.g., "YurianaWench.esp" and presets), updates INI to |0.
-- " x* " : Removes complete entry from the key every execution– (does not change INI); if presets already Removes, no changes are made.
-
+- " x- " : Removes specific preset every execution – (does not change INI); if already removed, no changes.
+- " * " : Removes complete entry from key (e.g., npc or race) – eliminates plugin (e.g., "YurianaWench.esp" and presets), updates INI to |0.
+- " x* " : Removes complete entry from key every execution – (does not change INI); if already removed, no changes.
+- Any number >=2 or invalid element: Treated as "1" – applies once, updates INI to |0.
+```
 If JSON cannot be read (e.g., due to execution path discrepancy), process stops for stability to avoid CTD or problems.
 
-Logs actions and summary in OBody_preset_Distribution_Config_Assistant-NG.log is in \Skyrim Special Edition\SKSE
+Logs actions and summary in OBody_preset_Distribution_Config_Assistant-NG.log.
 
 ## INI Rules Examples
 
