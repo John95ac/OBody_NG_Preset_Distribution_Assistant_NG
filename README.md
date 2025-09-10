@@ -6,9 +6,10 @@ It is a simple but powerful SKSE DLL that processes OBody preset distribution co
 
 # What does it do?
 
-Upon data loaded, scans Data for OBody_PD_*.ini files, parses rules (key = keyselec|presets|Mode), applies to OBody_presetDistributionConfig.json preserving order.
+Upon data loaded, scans Data for OBody_PD_*.ini files, parses rules (Key = Keyselec|PresetA,PresetB,...|Mode), applies to OBody_presetDistributionConfig.json preserving order.
 
 Modes:
+
 ```
 - " x " : Unlimited – adds presets to JSON every execution (does not change INI); if already exist, no changes.
 - " 1 " : Once – adds presets, updates INI to |0 (applies only once, then deactivates).
@@ -19,6 +20,7 @@ Modes:
 - " x* " : Removes complete entry from key every execution – (does not change INI); if already removed, no changes.
 - Any number >=2 or invalid element: Treated as "1" – applies once, updates INI to |0.
 ```
+
 If JSON cannot be read (e.g., due to execution path discrepancy), process stops for stability to avoid CTD or problems.
 
 Logs actions and summary in OBody_preset_Distribution_Config_Assistant-NG.log.
