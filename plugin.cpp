@@ -490,7 +490,11 @@ ParsedRule ParseRuleLine(const std::string& key, const std::string& value) {
 
             // Determinar el conteo de aplicación
             if (rule.extra == "x" || rule.extra == "X") {
-                rule.applyCount = -1;  // Ilimitado
+                rule.applyCount = -1;  // Ilimitado agregar
+            } else if (rule.extra == "x-" || rule.extra == "X-") {
+                rule.applyCount = -4;  // Ilimitado remover preset específico
+            } else if (rule.extra == "x*" || rule.extra == "X*") {
+                rule.applyCount = -5;  // Ilimitado remover plugin completo
             } else if (rule.extra == "-") {
                 rule.applyCount = -2;  // Remover preset específico
             } else if (rule.extra == "*") {
@@ -498,8 +502,11 @@ ParsedRule ParseRuleLine(const std::string& key, const std::string& value) {
             } else {
                 try {
                     rule.applyCount = std::stoi(rule.extra);
+                    if (rule.applyCount < 0) {
+                        rule.applyCount = 0;  // Invalidar si negativo y no reconocido
+                    }
                 } catch (...) {
-                    rule.applyCount = -1;  // Si no es un número, tratar como ilimitado
+                    rule.applyCount = 1;  // Si no es un número válido, tratar como "1" (aplicar una vez y actualizar a |0)
                 }
             }
         } else {
@@ -875,8 +882,8 @@ extern "C" bool SKSEPluginLoad(const SKSE::LoadInterface* skse) {
                                         bool shouldApply = false;
                                         bool needsUpdate = false;
                                         int newCount = rule.applyCount;
-                            
-                                        if (rule.applyCount == -1 || rule.applyCount == -2 || rule.applyCount == -3 || rule.applyCount > 0) {
+                                
+                                        if (rule.applyCount == -1 || rule.applyCount == -2 || rule.applyCount == -3 || rule.applyCount == -4 || rule.applyCount == -5 || rule.applyCount > 0) {
                                             shouldApply = true;
                                             if (rule.applyCount > 0) {
                                                 needsUpdate = true;
@@ -885,6 +892,7 @@ extern "C" bool SKSEPluginLoad(const SKSE::LoadInterface* skse) {
                                                 needsUpdate = true;
                                                 newCount = 0;  // Actualizar a 0 después de remoción
                                             }
+                                            // Para -4 y -5 (x- y x*), no actualizar INI (needsUpdate = false)
                                         } else {
                                             // applyCount es 0 - no aplicar
                                             shouldApply = false;
@@ -919,7 +927,7 @@ extern "C" bool SKSEPluginLoad(const SKSE::LoadInterface* skse) {
                                                     logFile << "  No new presets added (all already exist): " << key
                                                             << " -> Plugin: " << rule.plugin << std::endl;
                                                 }
-                                            } else if (rule.applyCount == -2) {
+                                            } else if (rule.applyCount == -4 || rule.applyCount == -2) {
                                                 // Remover todos los presets listados (strip ! si presente en rule)
                                                 int presetsRemoved = 0;
                                                 for (const auto& preset : rule.presets) {
@@ -938,13 +946,15 @@ extern "C" bool SKSEPluginLoad(const SKSE::LoadInterface* skse) {
                                                     totalRulesApplied++;
                                                     totalPresetsRemoved += presetsRemoved;
                                                     presetsRemovedInFile += presetsRemoved;
+                                                    std::string mode = (rule.applyCount == -4) ? "x-" : "-";
                                                     logFile << "  Applied: " << key << " -> Plugin: " << rule.plugin
-                                                            << " -> Removed " << presetsRemoved << " presets (mode: -)" << std::endl;
+                                                            << " -> Removed " << presetsRemoved << " presets (mode: " << mode << ")" << std::endl;
                                                 } else {
-                                                    logFile << "  No presets removed (not found): " << key
-                                                            << " -> Plugin: " << rule.plugin << std::endl;
+                                                    std::string mode = (rule.applyCount == -4) ? "x-" : "-";
+                                                    logFile << "  No changes (already removed): " << key
+                                                            << " -> Plugin: " << rule.plugin << " (mode: " << mode << ")" << std::endl;
                                                 }
-                                            } else if (rule.applyCount == -3) {
+                                            } else if (rule.applyCount == -5 || rule.applyCount == -3) {
                                                 // Remover plugin completo
                                                 size_t beforePlugins = data.getPluginCount();
                                                 data.removePlugin(rule.plugin);
@@ -954,11 +964,13 @@ extern "C" bool SKSEPluginLoad(const SKSE::LoadInterface* skse) {
                                                     totalRulesApplied++;
                                                     totalPluginsRemoved++;
                                                     pluginsRemovedInFile++;
+                                                    std::string mode = (rule.applyCount == -5) ? "x*" : "*";
                                                     logFile << "  Applied: " << key << " -> Removed entire plugin: " << rule.plugin
-                                                            << " (mode: *)" << std::endl;
+                                                            << " (mode: " << mode << ")" << std::endl;
                                                 } else {
-                                                    logFile << "  No plugin removed (not found): " << key
-                                                            << " -> Plugin: " << rule.plugin << std::endl;
+                                                    std::string mode = (rule.applyCount == -5) ? "x*" : "*";
+                                                    logFile << "  No changes (already removed): " << key
+                                                            << " -> Plugin: " << rule.plugin << " (mode: " << mode << ")" << std::endl;
                                                 }
                                             } else if (rule.applyCount > 0) {
                                                 // Agregar presets (limitado)
