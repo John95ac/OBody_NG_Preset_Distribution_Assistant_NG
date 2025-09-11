@@ -433,7 +433,7 @@ std::string GetDocumentsPath() {
     }
 }
 
-// ✅ FUNCIÓN ULTRA-SEGURA para obtener la ruta de instalación de Skyrim
+// ✅ FUNCIÓN ULTRA-SEGURA para obtener la ruta de instalación de Skyrim sea MO2 o Vortex o Steam/GOG/AE/VR
 std::string GetGamePath() {
     try {
         // Check mod managers env vars for virtual paths (MO2/Vortex)
@@ -1037,7 +1037,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                     CreateDirectoryIfNotExists(sksePluginsPath);
 
                     fs::path logFilePath = fs::path(documentsPath) / "My Games" / "Skyrim Special Edition" / "SKSE" /
-                                           "OBody_preset_Distribution_Config_Assistant-NG.log";
+                                           "OBody_NG_Preset_Distribution_Assistant-NG.log";
                     CreateDirectoryIfNotExists(logFilePath.parent_path());
 
                     std::ofstream logFile(logFilePath);
@@ -1048,7 +1048,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                     localtime_s(&buf, &in_time_t);
 
                     logFile << "====================================================" << std::endl;
-                    logFile << "OBody Preset Distribution Config Assistant NG" << std::endl;
+                    logFile << "OBody NG Preset Distribution Assistant NG" << std::endl;
                     logFile << "Log created on: " << std::put_time(&buf, "%Y-%m-%d %H:%M:%S") << std::endl;
                     logFile << "====================================================" << std::endl << std::endl;
 
@@ -1086,7 +1086,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                     int totalPluginsRemoved = 0;
                     int totalFilesProcessed = 0;
 
-                    logFile << "Scanning for OBody_PD_*.ini files..." << std::endl;
+                    logFile << "Scanning for OBodyNG_PDA_*.ini files..." << std::endl;
                     logFile << "----------------------------------------------------" << std::endl;
 
                     // --- 4. Procesar archivos .ini de manera segura ---
@@ -1095,8 +1095,8 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                             if (entry.is_regular_file()) {
                                 std::string filename = entry.path().filename().string();
 
-                                // Verificar si el archivo empieza con "OBody_PD_" y termina con ".ini"
-                                if (filename.rfind("OBody_PD_", 0) == 0 && filename.size() > 4 &&
+                                // Verificar si el archivo empieza con "OBodyNG_PDA_" y termina con ".ini"
+                                if (filename.rfind("OBodyNG_PDA_", 0) == 0 && filename.size() > 4 &&
                                     filename.substr(filename.length() - 4) == ".ini") {
                                     logFile << std::endl << "Processing file: " << filename << std::endl;
                                     totalFilesProcessed++;
@@ -1397,7 +1397,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                         std::string logMsg =
                             "All the process and elements analysis can be read in the "
-                            "OBody_preset_Distribution_Config_Assistant-NG.log inside SKSE.";
+                            "OBody_NG_Preset_Distribution_Assistant-NG.log inside SKSE.";
                         RE::ConsoleLog::GetSingleton()->Print(logMsg.c_str());
                     }
 
