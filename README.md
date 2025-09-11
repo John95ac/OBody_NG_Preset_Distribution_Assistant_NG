@@ -1,4 +1,4 @@
-# 📜 SKSE "OBody Preset Distribution Config Assistant NG"
+# 📜 SKSE "OBody NG Preset Distribution Assistant NG"
 
 It is a simple but powerful SKSE DLL that processes OBody preset distribution configuration files from INI, paired with SPID to manage presets to the Master OBody_presetDistributionConfig.json automatically without direct intervention. It was created with the objective of automating the application of preset rules for the OBody mod in Skyrim Special Edition, the purpose of this is to facilitate modders in delivering an OBody for their characters, and also adding a default preset which users can easily change from their game.
 
@@ -6,7 +6,7 @@ It is a simple but powerful SKSE DLL that processes OBody preset distribution co
 
 # What does it do?
 
-Upon data loaded, scans Data for OBody_PD_*.ini files, parses rules (Key = Keyselec|PresetA,PresetB,...|Mode), applies to OBody_presetDistributionConfig.json preserving order.
+Upon data loaded, scans Data for OBodyNG_PDA_*.ini files, parses rules (Key = Keyselec|PresetA,PresetB,...|Mode), applies to OBody_presetDistributionConfig.json preserving order.
 
 Modes:
 
@@ -23,12 +23,12 @@ Modes:
 
 If JSON cannot be read (e.g., due to execution path discrepancy), process stops for stability to avoid CTD or problems.
 
-Logs actions and summary in OBody_preset_Distribution_Config_Assistant-NG.log.
+Logs actions and summary in OBody_NG_Preset_Distribution_Assistant_NG.log.
 
 ## INI Rules Examples
 
 ```
-;OBody_preset_Distribution_Config_Assistant-NG
+;OBody_NG_Preset_Distribution_Assistant_NG
 
 ;Example of code designs: it's very similar to SPID but shorter and simpler.
 
@@ -45,7 +45,53 @@ Logs actions and summary in OBody_preset_Distribution_Config_Assistant-NG.log.
 ; https://www.nexusmods.com/skyrimspecialedition/articles/4756
 ```
 
-# Acknowledgements
+## Updates and Revisions
+
+**Version 1.0.0:**
+
+This is the first version of the DLL, introducing the core functionality for processing INI rules to automate OBody preset distribution. It establishes the foundation for safe JSON updates while preserving order and existing data.
+
+Key INI rules explained:
+
+- " x " **(Unlimited Add)**: Adds the specified presets to the JSON every time the plugin loads, without modifying the INI file. If the presets already exist for the plugin, no duplicates are added, ensuring idempotent behavior for repeated executions in mod load orders or updates.
+- " 1 " **(Once Add)**: Adds the presets to the JSON only one time, then automatically updates the INI rule to "|0" to deactivate it, preventing re-application on subsequent loads. Ideal for one-off distributions in mod installations.
+- " 0 " **(Disabled)**: Completely skips the rule, logging it as "Skipped" without any JSON changes. This allows modders to disable rules temporarily or permanently without deleting lines, useful for debugging or user customization.
+
+**Version 1.2.0:**
+
+An error was detected in some versions of Windows where the code only read files using ANSI code pages, leading to failures in handling paths with non-ASCII characters (e.g., accented letters or international symbols in mod folders). To address this, a Unicode method using UTF-8 was included as a primary encoding option, with fallbacks to system ANSI and ASCII-safe conversion. This update improves compatibility on legacy Windows setups (e.g., Windows 7/8 in non-English locales) and prevents CTDs from encoding mismatches, laying the groundwork for the full Unicode enhancements in subsequent versions.
+Advanced removal options introduced in this version for more granular control:
+
+- " - " **(One-Time Preset Remove)**: Removes specific presets from the JSON (using "!" prefix in preset names, e.g., "!BadPreset" to remove "BadPreset"), then updates the INI rule to "|0" to deactivate it. Applies only once, ideal for cleaning up specific presets in mod updates without repeated execution.
+- " x- " **(Unlimited Preset Remove)**: Removes specific presets every time the plugin loads, without modifying the INI file. If the presets are already removed, no changes are made, ensuring idempotent behavior for ongoing maintenance in dynamic mod setups.
+- " * " **(One-Time Plugin Remove)**: Removes the entire plugin entry (all presets for that plugin) from the key in the JSON, then updates the INI rule to "|0". Applies only once, useful for completely disabling a plugin's presets in a single pass.
+- " x* " **(Unlimited Plugin Remove)**: Removes the entire plugin entry every time the plugin loads, without modifying the INI file. If the plugin is already removed, no changes occur, perfect for persistent removal across load orders or updates.
+
+**Version 1.5.3:**
+
+ the plugin now includes enhanced Unicode support via UTF-8 and ANSI fallbacks in the `SafeWideStringToString` function, ensuring robust handling of file paths and strings to prevent crashes and encoding errors across diverse Windows systems. Not all PCs have consistent ANSI (code page) support, which can result in CTDs due to logic errors when dealing with non-ASCII characters in mod paths or international locales. This implementation prioritizes UTF-8 for modern compatibility, falls back to the system's ANSI code page, and uses an ASCII-safe conversion as a final resort to maintain stability in varied Skyrim modding environments.
+
+Special thanks to the beta testers who dedicated their valuable time to thoroughly test the DLLs, identify issues, and collaborate on solutions. Your contributions have been essential in refining this plugin for reliability.
+
+## Acknowledgements
+
+### Beta Testers
+
+<table>
+<tr>
+<td><img src="Beta Testers/OpheliaMoonlight.png" width="100" height="100" alt="OpheliaMoonlight"></td>
+<td><img src="Beta Testers/IAleX.png" width="100" height="100" alt="IAleX"></td>
+<td><img src="Beta Testers/Thalzamar.png" width="100" height="100" alt="Thalzamar"></td>
+<td><img src="Beta Testers/Cryshy.png" width="100" height="100" alt="Cryshy"></td>
+<td><img src="Beta Testers/Lucas.png" width="100" height="100" alt="Lucas"></td>
+<td><img src="Beta Testers/storm12.png" width="100" height="100" alt="storm12"></td>
+
+</tr>
+</table>
+
+I also want to extend my deepest gratitude to the beta testers who generously dedicated their valuable time to help me program, test, and refine the mods. Without their voluntary contributions and collaborative spirit, achieving a stable public version would not have been possible. I truly appreciate how they not only assisted me but also supported the broader modding community selflessly. I love you all, guys **Cryshy**, **IAleX**, **Lucas**, **OpheliaMoonlight**, **storm12**, and **Thalzamar** your efforts have been invaluable, and I'm incredibly thankful for your dedication.
+
+A special shoutout to **OpheliaMoonlight** for testing the program in the beta phase. In her case, particularly, the programming languages did not support Unicode initially, so after many hours of trial and error, we managed to make it work on multiple platforms. Thank you so much!
 
 Special thanks to the SKSE community and CommonLibSSE developers for the foundation. This plugin is based on SKSE templates and my custom parsing logic for INI and JSON. Thanks for the tools that make modding possible.
 
