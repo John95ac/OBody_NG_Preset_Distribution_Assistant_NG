@@ -69,9 +69,31 @@ Advanced removal options introduced in this version for more granular control:
 
 **Version 1.5.3:**
 
- the plugin now includes enhanced Unicode support via UTF-8 and ANSI fallbacks in the `SafeWideStringToString` function, ensuring robust handling of file paths and strings to prevent crashes and encoding errors across diverse Windows systems. Not all PCs have consistent ANSI (code page) support, which can result in CTDs due to logic errors when dealing with non-ASCII characters in mod paths or international locales. This implementation prioritizes UTF-8 for modern compatibility, falls back to the system's ANSI code page, and uses an ASCII-safe conversion as a final resort to maintain stability in varied Skyrim modding environments.
+  the plugin now includes enhanced Unicode support via UTF-8 and ANSI fallbacks in the `SafeWideStringToString` function, ensuring robust handling of file paths and strings to prevent crashes and encoding errors across diverse Windows systems. Not all PCs have consistent ANSI (code page) support, which can result in CTDs due to logic errors when dealing with non-ASCII characters in mod paths or international locales. This implementation prioritizes UTF-8 for modern compatibility, falls back to the system's ANSI code page, and uses an ASCII-safe conversion as a final resort to maintain stability in varied Skyrim modding environments.
 
 Special thanks to the beta testers who dedicated their valuable time to thoroughly test the DLLs, identify issues, and collaborate on solutions. Your contributions have been essential in refining this plugin for reliability.
+
+**Version 1.6.0:**
+
+This version incorporates additional revisions to the DLL processing logic, enhancing overall stability, error handling, and performance during INI rule parsing and JSON modifications.
+
+A new one-time backup system has been added to safeguard the original OBody_presetDistributionConfig.json by creating an exact copy before processing any INI rules. This prevents data loss during initial mod setups or updates.
+
+The system is configured via 'OBody_NG_Preset_Distribution_Assistant_NG.ini' in the DLL's directory (Data/SKSE/Plugins/). If the file doesn't exist, it is automatically created with default settings.
+
+INI Configuration Example:
+
+```
+[Original backup]
+Backup = 1  ; Set to 1 to enable (default); 0 to disable. After first use, automatically set to 0.
+```
+
+How it Functions (One-Time Operation):
+- On plugin load, if Backup = 1 and the JSON exists: Creates the backup folder (Data/SKSE/Plugins/Backup/) if needed, copies the JSON to Backup/OBody_presetDistributionConfig.json (exact copy, overwrites if exists), verifies file sizes match, then updates the INI to Backup = 0.
+- If Backup = 0: Skips backup and logs that it was already performed (or disabled).
+- The backup allows manual recovery by copying it back to OBody_presetDistributionConfig.json.
+- All actions (creation, verification, updates) are logged in OBody_NG_Preset_Distribution_Assistant_NG.log for transparency.
+- This ensures a safe, automated initial backup without repeated operations, ideal for mod installations in complex setups.
 
 ## Acknowledgements
 
