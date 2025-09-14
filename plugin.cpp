@@ -1,23 +1,24 @@
-#include <shlobj.h>
-#include <windows.h>
-
-#include <algorithm>
-#include <chrono>
-#include <ctime>
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
+#include <RE/Skyrim.h>
+#include <SKSE/SKSE.h>
+#include <REL/Relocation.h>
+#include <Windows.h>
+#include <ShlObj.h>
 #include <iostream>
-#include <map>
-#include <set>
+#include <fstream>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <filesystem>
+#include <chrono>
+#include <iomanip>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
-// ✅ FUNCIÓN ULTRA-SEGURA PARA CONVERSIÓN WIDE STRING A STRING (SIN CODECVT DEPRECATED)
+// FUNCIÓN ULTRA-SEGURA PARA CONVERSIÓN WIDE STRING A STRING (SIN CODECVT DEPRECATED)
 std::string SafeWideStringToString(const std::wstring& wstr) {
     if (wstr.empty()) {
         return std::string();
@@ -30,7 +31,7 @@ std::string SafeWideStringToString(const std::wstring& wstr) {
             // Fallback: usar CP_ACP (página de códigos del sistema)
             size_needed = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
             if (size_needed <= 0) {
-                return std::string();  // Conversión completamente fallida
+                return std::string(); // Conversión completamente fallida
             }
 
             std::string result(size_needed, 0);
@@ -39,6 +40,7 @@ std::string SafeWideStringToString(const std::wstring& wstr) {
             if (converted <= 0) {
                 return std::string();
             }
+
             return result;
         }
 
@@ -48,17 +50,17 @@ std::string SafeWideStringToString(const std::wstring& wstr) {
         if (converted <= 0) {
             return std::string();
         }
-        return result;
 
+        return result;
     } catch (...) {
         // Último recurso: conversión char por char (muy básico pero seguro)
         std::string result;
         result.reserve(wstr.size());
         for (wchar_t wc : wstr) {
-            if (wc <= 127) {  // Solo caracteres ASCII seguros
+            if (wc <= 127) { // Solo caracteres ASCII seguros
                 result.push_back(static_cast<char>(wc));
             } else {
-                result.push_back('?');  // Reemplazar caracteres problemáticos
+                result.push_back('?'); // Reemplazar caracteres problemáticos
             }
         }
         return result;
@@ -74,6 +76,7 @@ std::string GetEnvVar(const std::string& key) {
         free(buf);
         return value;
     }
+
     return "";
 }
 
@@ -94,7 +97,7 @@ struct OrderedPluginData {
     void addPreset(const std::string& plugin, const std::string& preset) {
         // Buscar si el plugin ya existe
         auto it = std::find_if(orderedData.begin(), orderedData.end(),
-                               [&plugin](const auto& pair) { return pair.first == plugin; });
+            [&plugin](const auto& pair) { return pair.first == plugin; });
 
         if (it == orderedData.end()) {
             // Plugin nuevo, agregarlo
@@ -110,7 +113,7 @@ struct OrderedPluginData {
 
     void removePreset(const std::string& plugin, const std::string& preset) {
         auto it = std::find_if(orderedData.begin(), orderedData.end(),
-                               [&plugin](const auto& pair) { return pair.first == plugin; });
+            [&plugin](const auto& pair) { return pair.first == plugin; });
 
         if (it != orderedData.end()) {
             auto& presets = it->second;
@@ -141,7 +144,7 @@ struct OrderedPluginData {
 
     void removePlugin(const std::string& plugin) {
         auto it = std::find_if(orderedData.begin(), orderedData.end(),
-                               [&plugin](const auto& pair) { return pair.first == plugin; });
+            [&plugin](const auto& pair) { return pair.first == plugin; });
 
         if (it != orderedData.end()) {
             orderedData.erase(it);
@@ -150,7 +153,7 @@ struct OrderedPluginData {
 
     bool hasPlugin(const std::string& plugin) const {
         return std::any_of(orderedData.begin(), orderedData.end(),
-                           [&plugin](const auto& pair) { return pair.first == plugin; });
+            [&plugin](const auto& pair) { return pair.first == plugin; });
     }
 
     size_t getPluginCount() const { return orderedData.size(); }
@@ -180,14 +183,14 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
     size_t len = 0;
     while (str[len] != '\0') ++len;
     size_t pos = 0;
-    const size_t maxIters = 10000;  // Limit to avoid infinite loop
+    const size_t maxIters = 10000; // Limit to avoid infinite loop
     size_t iter = 0;
 
     try {
         while (pos < len && iter++ < maxIters) {
             // Skip whitespace
             while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r' ||
-                                 str[pos] == '\f' || str[pos] == '\v'))
+                   str[pos] == '\f' || str[pos] == '\v'))
                 ++pos;
 
             if (pos >= len) break;
@@ -205,11 +208,11 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
             if (pos >= len) break;
 
             std::string plugin = extractSubstring(str, keyStart, pos);
-            ++pos;  // skip closing "
+            ++pos; // skip closing "
 
             // Skip whitespace
             while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r' ||
-                                 str[pos] == '\f' || str[pos] == '\v'))
+                   str[pos] == '\f' || str[pos] == '\v'))
                 ++pos;
 
             // Expect colon
@@ -218,11 +221,11 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
                 continue;
             }
 
-            ++pos;  // skip :
+            ++pos; // skip :
 
             // Skip whitespace
             while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r' ||
-                                 str[pos] == '\f' || str[pos] == '\v'))
+                   str[pos] == '\f' || str[pos] == '\v'))
                 ++pos;
 
             // Expect opening bracket
@@ -231,20 +234,20 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
                 continue;
             }
 
-            ++pos;  // skip [
+            ++pos; // skip [
 
             std::vector<std::string> presets;
             size_t presetIter = 0;
             while (pos < len && presetIter++ < maxIters) {
                 // Skip whitespace
                 while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r' ||
-                                     str[pos] == '\f' || str[pos] == '\v'))
+                       str[pos] == '\f' || str[pos] == '\v'))
                     ++pos;
 
                 if (pos >= len) break;
 
                 if (str[pos] == ']') {
-                    ++pos;  // skip ]
+                    ++pos; // skip ]
                     break;
                 }
 
@@ -262,18 +265,18 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
 
                 std::string preset = extractSubstring(str, presetStart, pos);
                 presets.push_back(preset);
-                ++pos;  // skip closing "
+                ++pos; // skip closing "
 
                 // Skip whitespace and expect comma or ]
                 while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r' ||
-                                     str[pos] == '\f' || str[pos] == '\v'))
+                       str[pos] == '\f' || str[pos] == '\v'))
                     ++pos;
 
                 if (pos < len && str[pos] == ',') {
-                    ++pos;  // skip ,
+                    ++pos; // skip ,
                     // Skip whitespace after comma
                     while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r' ||
-                                         str[pos] == '\f' || str[pos] == '\v'))
+                           str[pos] == '\f' || str[pos] == '\v'))
                         ++pos;
                 }
             }
@@ -286,8 +289,9 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
 
             // Skip to next entry (whitespace and comma)
             while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r' ||
-                                 str[pos] == '\f' || str[pos] == '\v'))
+                   str[pos] == '\f' || str[pos] == '\v'))
                 ++pos;
+
             if (pos < len && str[pos] == ',') ++pos;
 
             result.push_back({plugin, presets});
@@ -309,13 +313,14 @@ std::vector<std::pair<std::string, std::string>> ParseTopLevelSections(const std
     const char* str = json.c_str();
     size_t len = strlen(str);
     size_t pos = 0;
-    const size_t maxIters = 10000;  // Limit to avoid infinite loop on malformed JSON
+    const size_t maxIters = 10000; // Limit to avoid infinite loop on malformed JSON
     size_t iter = 0;
 
     try {
         while (pos < len && iter++ < maxIters) {
             // Skip whitespace
             while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
+
             if (pos >= len || str[pos] == '}') break;
 
             if (str[pos] != '"') {
@@ -329,15 +334,17 @@ std::vector<std::pair<std::string, std::string>> ParseTopLevelSections(const std
             if (pos >= len) break;
 
             std::string key = extractSubstring(str, keyStart, pos);
-            ++pos;  // skip "
+            ++pos; // skip "
 
             // Skip whitespace and :
             while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
+
             if (pos >= len || str[pos] != ':') {
                 ++pos;
                 continue;
             }
-            ++pos;  // skip :
+
+            ++pos; // skip :
 
             // Skip whitespace
             while (pos < len && (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r')) ++pos;
@@ -350,6 +357,7 @@ std::vector<std::pair<std::string, std::string>> ParseTopLevelSections(const std
                 bool inString = false;
                 bool escape = false;
                 size_t braceIter = 0;
+
                 while (pos < len && braceCount > 0 && braceIter++ < maxIters) {
                     if (str[pos] == '"' && !escape)
                         inString = !inString;
@@ -397,7 +405,7 @@ std::vector<std::pair<std::string, std::string>> ParseTopLevelSections(const std
     return sections;
 }
 
-// ✅ FUNCIÓN ULTRA-SEGURA para obtener la ruta de la carpeta "Documentos" del usuario
+// FUNCIÓN ULTRA-SEGURA para obtener la ruta de la carpeta "Documentos" del usuario
 std::string GetDocumentsPath() {
     try {
         wchar_t path[MAX_PATH] = {0};
@@ -426,14 +434,13 @@ std::string GetDocumentsPath() {
 
         // Fallback 3: Ruta hardcoded (último recurso)
         return "C:\\Users\\Default\\Documents";
-
     } catch (const std::exception&) {
         // Último recurso absoluto
         return "C:\\Users\\Default\\Documents";
     }
 }
 
-// ✅ FUNCIÓN ULTRA-SEGURA para obtener la ruta de instalación de Skyrim sea MO2 o Vortex o Steam/GOG/AE/VR
+// FUNCIÓN ULTRA-SEGURA para obtener la ruta de instalación de Skyrim sea MO2 o Vortex o Steam/GOG/AE/VR
 std::string GetGamePath() {
     try {
         // Check mod managers env vars for virtual paths (MO2/Vortex)
@@ -456,8 +463,8 @@ std::string GetGamePath() {
         std::vector<std::string> registryKeys = {
             "SOFTWARE\\WOW6432Node\\Bethesda Softworks\\Skyrim Special Edition",
             "SOFTWARE\\WOW6432Node\\GOG.com\\Games\\1457087920",
-            "SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\489830",  // AE
-            "SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\611670"   // VR
+            "SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\489830", // AE
+            "SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\611670" // VR
         };
 
         HKEY hKey;
@@ -497,13 +504,12 @@ std::string GetGamePath() {
         }
 
         return "";
-
     } catch (const std::exception&) {
         return "";
     }
 }
 
-// ✅ FUNCIÓN SEGURA para crear un directorio si no existe
+// FUNCIÓN SEGURA para crear un directorio si no existe
 void CreateDirectoryIfNotExists(const fs::path& path) {
     try {
         if (!fs::exists(path)) {
@@ -545,41 +551,41 @@ std::string EscapeJson(const std::string& str) {
     std::string result;
     for (char c : str) {
         switch (c) {
-            case '"':
-                result += "\\\"";
-                break;
-            case '\\':
-                result += "\\\\";
-                break;
-            case '\b':
-                result += "\\b";
-                break;
-            case '\f':
-                result += "\\f";
-                break;
-            case '\n':
-                result += "\\n";
-                break;
-            case '\r':
-                result += "\\r";
-                break;
-            case '\t':
-                result += "\\t";
-                break;
-            default:
-                if (c >= 0x20 && c <= 0x7E) {
-                    result += c;
-                } else {
-                    char buf[7];
-                    snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c);
-                    result += buf;
-                }
+        case '"':
+            result += "\\\"";
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        case '\b':
+            result += "\\b";
+            break;
+        case '\f':
+            result += "\\f";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        default:
+            if (c >= 0x20 && c <= 0x7E) {
+                result += c;
+            } else {
+                char buf[7];
+                snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c);
+                result += buf;
+            }
         }
     }
     return result;
 }
 
-// ✅ FUNCIÓN CORREGIDA para pretty-print el JSON con indentación consistente de 4 espacios
+// FUNCIÓN CORREGIDA para pretty-print el JSON con indentación consistente de 4 espacios
 std::string PrettyPrintJson(const std::string& json) {
     std::string result;
     std::vector<int> indentStack;
@@ -606,13 +612,15 @@ std::string PrettyPrintJson(const std::string& json) {
         } else {
             if (c == '{' || c == '[') {
                 indentStack.push_back(currentIndent);
-                currentIndent += 4;  // ✅ 4 espacios de indentación
+                currentIndent += 4; // 4 espacios de indentación
+
                 if (afterComma) {
                     result += "\n";
                     result += std::string(currentIndent, ' ');
                 } else {
                     result += " ";
                 }
+
                 result += c;
                 afterComma = false;
                 afterColon = false;
@@ -667,49 +675,285 @@ ParsedRule ParseRuleLine(const std::string& key, const std::string& value) {
 
     if (parts.size() >= 2) {
         // Primera parte es el plugin/mod
-        rule.plugin = parts[0];
+        rule.plugin = Trim(parts[0]);
 
         // Segunda parte son los presets separados por comas
         rule.presets = Split(parts[1], ',');
 
         // Si hay una tercera parte, es el extra (x, 1, 0)
         if (parts.size() >= 3) {
-            rule.extra = parts[2];
+            rule.extra = Trim(parts[2]);
 
-            // Determinar el conteo de aplicación
-            if (rule.extra == "x" || rule.extra == "X") {
-                rule.applyCount = -1;  // Ilimitado agregar
-            } else if (rule.extra == "x-" || rule.extra == "X-") {
-                rule.applyCount = -4;  // Ilimitado remover preset específico
-            } else if (rule.extra == "x*" || rule.extra == "X*") {
-                rule.applyCount = -5;  // Ilimitado remover plugin completo
-            } else if (rule.extra == "-") {
-                rule.applyCount = -2;  // Remover preset específico
-            } else if (rule.extra == "*") {
-                rule.applyCount = -3;  // Remover plugin completo
+            // NUEVO: Si extra está vacío después de trim, tratar como "x" (ilimitado)
+            if (rule.extra.empty()) {
+                rule.applyCount = -1;  // Equivalente a "x"
             } else {
-                try {
-                    rule.applyCount = std::stoi(rule.extra);
-                    if (rule.applyCount < 0) {
-                        rule.applyCount = 0;  // Invalidar si negativo y no reconocido
+                // Determinar el conteo de aplicación (código original)
+                if (rule.extra == "x" || rule.extra == "X") {
+                    rule.applyCount = -1; // Ilimitado agregar
+                } else if (rule.extra == "x-" || rule.extra == "X-") {
+                    rule.applyCount = -4; // Ilimitado remover preset específico
+                } else if (rule.extra == "x*" || rule.extra == "X*") {
+                    rule.applyCount = -5; // Ilimitado remover plugin completo
+                } else if (rule.extra == "-") {
+                    rule.applyCount = -2; // Remover preset específico
+                } else if (rule.extra == "*") {
+                    rule.applyCount = -3; // Remover plugin completo
+                } else {
+                    try {
+                        rule.applyCount = std::stoi(rule.extra);
+                        if (rule.applyCount != 0 && rule.applyCount != 1) {
+                            rule.applyCount = 0; // Invalidar si no es exactamente 0 o 1
+                        }
+                    } catch (...) {
+                        rule.applyCount = 0; // Si no es un número válido, tratar como 0 (skip)
                     }
-                } catch (...) {
-                    rule.applyCount =
-                        1;  // Si no es un número válido, tratar como "1" (aplicar una vez y actualizar a |0)
                 }
             }
         } else {
-            rule.applyCount = -1;  // Por defecto, ilimitado
+            // Sin tercera parte: Por defecto, ilimitado (como antes)
+            rule.applyCount = -1;
         }
     }
 
     return rule;
 }
 
-// ✅ FUNCIÓN ULTRA-SEGURA para leer TODO el JSON existente preservando orden
+// ===== NUEVAS FUNCIONES PARA SISTEMA DE BACKUP =====
+
+// Función para leer configuración de backup del INI
+int ReadBackupConfigFromIni(const fs::path& iniPath, std::ofstream& logFile) {
+    try {
+        if (!fs::exists(iniPath)) {
+            // Crear el INI con configuración por defecto
+            logFile << "Creating backup config INI at: " << iniPath.string() << std::endl;
+            std::ofstream createIni(iniPath);
+            if (createIni.is_open()) {
+                createIni << "[Original backup]" << std::endl;
+                createIni << "Backup = 1" << std::endl;
+                createIni.close();
+                logFile << "SUCCESS: Backup config INI created with default value (Backup = 1)" << std::endl;
+                return 1;
+            } else {
+                logFile << "ERROR: Could not create backup config INI file!" << std::endl;
+                return 0;
+            }
+        }
+
+        std::ifstream iniFile(iniPath);
+        if (!iniFile.is_open()) {
+            logFile << "ERROR: Could not open backup config INI file for reading!" << std::endl;
+            return 0;
+        }
+
+        std::string line;
+        bool inBackupSection = false;
+        int backupValue = 1; // Default value
+
+        while (std::getline(iniFile, line)) {
+            std::string trimmedLine = Trim(line);
+
+            // Check for section header
+            if (trimmedLine == "[Original backup]") {
+                inBackupSection = true;
+                continue;
+            }
+
+            // Check for other section (exit backup section)
+            if (trimmedLine.length() > 0 && trimmedLine[0] == '[' && trimmedLine != "[Original backup]") {
+                inBackupSection = false;
+                continue;
+            }
+
+            // If we're in the backup section, look for Backup = value
+            if (inBackupSection) {
+                size_t equalPos = trimmedLine.find('=');
+                if (equalPos != std::string::npos) {
+                    std::string key = Trim(trimmedLine.substr(0, equalPos));
+                    std::string value = Trim(trimmedLine.substr(equalPos + 1));
+
+                    if (key == "Backup") {
+                        try {
+                            backupValue = std::stoi(value);
+                            logFile << "Read backup config: Backup = " << backupValue << std::endl;
+                            break;
+                        } catch (...) {
+                            logFile << "Warning: Invalid backup value '" << value << "', using default (1)" << std::endl;
+                            backupValue = 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        iniFile.close();
+        return backupValue;
+
+    } catch (const std::exception& e) {
+        logFile << "ERROR in ReadBackupConfigFromIni: " << e.what() << std::endl;
+        return 0;
+    } catch (...) {
+        logFile << "ERROR in ReadBackupConfigFromIni: Unknown exception" << std::endl;
+        return 0;
+    }
+}
+
+// Función para actualizar configuración de backup en el INI (cambiar 1 a 0)
+void UpdateBackupConfigInIni(const fs::path& iniPath, std::ofstream& logFile) {
+    try {
+        if (!fs::exists(iniPath)) {
+            logFile << "ERROR: Backup config INI file does not exist for update!" << std::endl;
+            return;
+        }
+
+        std::ifstream iniFile(iniPath);
+        if (!iniFile.is_open()) {
+            logFile << "ERROR: Could not open backup config INI file for reading during update!" << std::endl;
+            return;
+        }
+
+        std::vector<std::string> lines;
+        std::string line;
+        bool inBackupSection = false;
+        bool backupValueUpdated = false;
+
+        while (std::getline(iniFile, line)) {
+            std::string trimmedLine = Trim(line);
+
+            // Check for section header
+            if (trimmedLine == "[Original backup]") {
+                inBackupSection = true;
+                lines.push_back(line);
+                continue;
+            }
+
+            // Check for other section (exit backup section)
+            if (trimmedLine.length() > 0 && trimmedLine[0] == '[' && trimmedLine != "[Original backup]") {
+                inBackupSection = false;
+                lines.push_back(line);
+                continue;
+            }
+
+            // If we're in the backup section, look for Backup = value
+            if (inBackupSection) {
+                size_t equalPos = trimmedLine.find('=');
+                if (equalPos != std::string::npos) {
+                    std::string key = Trim(trimmedLine.substr(0, equalPos));
+                    
+                    if (key == "Backup") {
+                        lines.push_back("Backup = 0");
+                        backupValueUpdated = true;
+                        continue;
+                    }
+                }
+            }
+
+            lines.push_back(line);
+        }
+
+        iniFile.close();
+
+        if (!backupValueUpdated) {
+            logFile << "Warning: Backup value not found in INI during update!" << std::endl;
+            return;
+        }
+
+        // Write back to file
+        std::ofstream outFile(iniPath);
+        if (!outFile.is_open()) {
+            logFile << "ERROR: Could not open backup config INI file for writing during update!" << std::endl;
+            return;
+        }
+
+        for (const auto& outputLine : lines) {
+            outFile << outputLine << std::endl;
+        }
+
+        outFile.close();
+        logFile << "SUCCESS: Backup config updated (Backup = 0)" << std::endl;
+
+    } catch (const std::exception& e) {
+        logFile << "ERROR in UpdateBackupConfigInIni: " << e.what() << std::endl;
+    } catch (...) {
+        logFile << "ERROR in UpdateBackupConfigInIni: Unknown exception" << std::endl;
+    }
+}
+
+// Función para realizar el backup completo del JSON
+bool PerformJsonBackup(const fs::path& originalJsonPath, const fs::path& backupJsonPath, std::ofstream& logFile) {
+    try {
+        // Verificar que el JSON original existe
+        if (!fs::exists(originalJsonPath)) {
+            logFile << "ERROR: Original JSON file does not exist at: " << originalJsonPath.string() << std::endl;
+            return false;
+        }
+
+        // Crear directorio de backup si no existe
+        CreateDirectoryIfNotExists(backupJsonPath.parent_path());
+        
+        // Leer el contenido completo del JSON original
+        std::ifstream originalFile(originalJsonPath);
+        if (!originalFile.is_open()) {
+            logFile << "ERROR: Could not open original JSON file for backup reading!" << std::endl;
+            return false;
+        }
+
+        std::string jsonContent((std::istreambuf_iterator<char>(originalFile)), std::istreambuf_iterator<char>());
+        originalFile.close();
+
+        if (jsonContent.empty()) {
+            logFile << "ERROR: Original JSON file is empty, cannot perform backup!" << std::endl;
+            return false;
+        }
+
+        // Escribir el contenido al archivo de backup
+        std::ofstream backupFile(backupJsonPath);
+        if (!backupFile.is_open()) {
+            logFile << "ERROR: Could not create backup JSON file at: " << backupJsonPath.string() << std::endl;
+            return false;
+        }
+
+        backupFile << jsonContent;
+        backupFile.close();
+
+        if (backupFile.fail()) {
+            logFile << "ERROR: Failed to write complete backup content!" << std::endl;
+            return false;
+        }
+
+        // Verificar el tamaño del archivo copiado
+        try {
+            auto originalSize = fs::file_size(originalJsonPath);
+            auto backupSize = fs::file_size(backupJsonPath);
+            
+            if (originalSize == backupSize) {
+                logFile << "SUCCESS: Original JSON backed up to: " << backupJsonPath.string() << std::endl;
+                logFile << "Backup file size: " << backupSize << " bytes" << std::endl;
+                return true;
+            } else {
+                logFile << "ERROR: Backup file size mismatch! Original: " << originalSize << ", Backup: " << backupSize << std::endl;
+                return false;
+            }
+        } catch (...) {
+            logFile << "SUCCESS: Original JSON backed up to: " << backupJsonPath.string() << " (size verification failed but backup completed)" << std::endl;
+            return true;
+        }
+
+    } catch (const std::exception& e) {
+        logFile << "ERROR in PerformJsonBackup: " << e.what() << std::endl;
+        return false;
+    } catch (...) {
+        logFile << "ERROR in PerformJsonBackup: Unknown exception" << std::endl;
+        return false;
+    }
+}
+
+// ===== FIN DE FUNCIONES DE BACKUP =====
+
+// FUNCIÓN ULTRA-SEGURA para leer TODO el JSON existente preservando orden
 std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
-                                              std::map<std::string, OrderedPluginData>& processedData,
-                                              std::ofstream& logFile) {
+                                               std::map<std::string, OrderedPluginData>& processedData,
+                                               std::ofstream& logFile) {
     bool success = false;
     std::string jsonContent = "{}";
 
@@ -749,16 +993,16 @@ std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
         }
 
         // Limit size for memory safety
-        if (jsonContent.size() > 1048576) {  // 1MB limit
+        if (jsonContent.size() > 1048576) { // 1MB limit
             logFile << "Warning: JSON too large (>1MB), using subset." << std::endl;
             jsonContent = jsonContent.substr(0, 1048576);
         }
 
-        jsonContent.reserve(1024 * 1024);  // Pre-reserve for safety
+        jsonContent.reserve(1024 * 1024); // Pre-reserve for safety
 
         // Parsear los datos que necesitamos modificar preservando el orden
-        const std::vector<std::string> validKeys = {"npcFormID",       "npc",           "factionFemale", "factionMale",
-                                                    "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+        const std::vector<std::string> validKeys = {"npcFormID", "npc", "factionFemale", "factionMale",
+                                                     "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"};
 
         for (const auto& key : validKeys) {
             processedData[key] = OrderedPluginData();
@@ -842,7 +1086,6 @@ std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
 
         logFile << std::endl;
         logFile.flush();
-
         success = true;
         return {true, jsonContent};
 
@@ -861,7 +1104,7 @@ std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
     }
 }
 
-// ✅ FUNCIÓN CORREGIDA para actualizar selectivamente el JSON existente preservando orden CON INDENTACIÓN DE 4 ESPACIOS
+// FUNCIÓN CORREGIDA para actualizar selectivamente el JSON existente preservando orden CON INDENTACIÓN DE 4 ESPACIOS
 std::string UpdateJsonSelectively(const std::string& originalJson,
                                   const std::map<std::string, OrderedPluginData>& processedData) {
     try {
@@ -871,8 +1114,8 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
         result << "{\n";
 
         bool firstSection = true;
-        const std::vector<std::string> validKeys = {"npcFormID",       "npc",           "factionFemale", "factionMale",
-                                                    "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+        const std::vector<std::string> validKeys = {"npcFormID", "npc", "factionFemale", "factionMale",
+                                                     "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"};
 
         for (const auto& [key, originalValue] : topSections) {
             if (!firstSection) {
@@ -880,7 +1123,7 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
             }
 
             firstSection = false;
-            result << "    \"" << EscapeJson(key) << "\": ";  // ✅ 4 espacios de indentación
+            result << "    \"" << EscapeJson(key) << "\": "; // 4 espacios de indentación
 
             bool isValidKeyWithData = (std::find(validKeys.begin(), validKeys.end(), key) != validKeys.end() &&
                                        processedData.count(key) && !processedData.at(key).orderedData.empty());
@@ -896,7 +1139,7 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
                     }
 
                     first = false;
-                    result << "        \"" << EscapeJson(plugin) << "\": [\n";  // ✅ 8 espacios de indentación
+                    result << "        \"" << EscapeJson(plugin) << "\": [\n"; // 8 espacios de indentación
 
                     bool firstPreset = true;
                     for (const auto& preset : presets) {
@@ -905,13 +1148,13 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
                         }
 
                         firstPreset = false;
-                        result << "            \"" << EscapeJson(preset) << "\"";  // ✅ 12 espacios de indentación
+                        result << "            \"" << EscapeJson(preset) << "\""; // 12 espacios de indentación
                     }
 
-                    result << "\n        ]";  // ✅ 8 espacios de indentación
+                    result << "\n        ]"; // 8 espacios de indentación
                 }
 
-                result << "\n    }";  // ✅ 4 espacios de indentación
+                result << "\n    }"; // 4 espacios de indentación
             } else {
                 std::string trimmedValue = originalValue;
                 // Inline rtrim for originalValue to remove trailing whitespace
@@ -925,7 +1168,7 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
         }
 
         std::string content = result.str();
-        content.reserve(1024 * 1024);  // Pre-reserve for memory safety
+        content.reserve(1024 * 1024); // Pre-reserve for memory safety
 
         // Inline rtrim for content to remove trailing whitespace before adding final \n}
         while (!content.empty() && isspace(static_cast<unsigned char>(content.back()))) {
@@ -933,7 +1176,6 @@ std::string UpdateJsonSelectively(const std::string& originalJson,
         }
 
         return content + "\n}";
-
     } catch (const std::exception&) {
         // Fallback to original on error
         return originalJson;
@@ -991,7 +1233,6 @@ void UpdateIniRuleCount(const fs::path& iniPath, const std::string& originalLine
         }
 
         outFile.close();
-
     } catch (const std::exception&) {
         // Silent fail on error
     } catch (...) {
@@ -999,7 +1240,7 @@ void UpdateIniRuleCount(const fs::path& iniPath, const std::string& originalLine
     }
 }
 
-// ✅ FUNCIÓN PRINCIPAL ULTRA-SEGURA que se ejecuta al cargar el plugin de SKSE
+// FUNCIÓN PRINCIPAL ULTRA-SEGURA que se ejecuta al cargar el plugin de SKSE
 extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface* skse) {
     try {
         SKSE::Init(skse);
@@ -1010,7 +1251,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                     std::string documentsPath;
                     std::string gamePath;
 
-                    // ✅ Obtener rutas de manera ultra-segura
+                    // Obtener rutas de manera ultra-segura
                     try {
                         documentsPath = GetDocumentsPath();
                         gamePath = GetGamePath();
@@ -1054,8 +1295,8 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                     // --- 2. Inicializar estructuras de datos ---
                     const std::set<std::string> validKeys = {
-                        "npcFormID",       "npc",           "factionFemale", "factionMale",
-                        "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+                        "npcFormID", "npc", "factionFemale", "factionMale",
+                        "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"};
 
                     // Usar std::map en lugar de unordered_map para preservar orden alfabético
                     std::map<std::string, OrderedPluginData> processedData;
@@ -1063,9 +1304,40 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         processedData[key] = OrderedPluginData();
                     }
 
-                    // --- 3. Leer el JSON existente COMPLETO ---
+                    // --- 2.5. SISTEMA DE BACKUP AUTOMÁTICO ---
+                    fs::path backupConfigIniPath = sksePluginsPath / "OBody_NG_Preset_Distribution_Assistant_NG.ini";
                     fs::path jsonOutputPath = sksePluginsPath / "OBody_presetDistributionConfig.json";
+                    fs::path backupJsonPath = sksePluginsPath / "Backup" / "OBody_presetDistributionConfig.json";
 
+                    logFile << "Checking backup configuration..." << std::endl;
+                    logFile << "----------------------------------------------------" << std::endl;
+
+                    int backupValue = ReadBackupConfigFromIni(backupConfigIniPath, logFile);
+                    bool backupPerformed = false;
+                    size_t backupFileSize = 0;
+
+                    if (backupValue == 1) {
+                        logFile << "Backup enabled (Backup = 1), performing backup..." << std::endl;
+                        if (PerformJsonBackup(jsonOutputPath, backupJsonPath, logFile)) {
+                            backupPerformed = true;
+                            try {
+                                backupFileSize = fs::file_size(backupJsonPath);
+                            } catch (...) {
+                                backupFileSize = 0;
+                            }
+                            // Actualizar INI a Backup = 0
+                            UpdateBackupConfigInIni(backupConfigIniPath, logFile);
+                        } else {
+                            logFile << "ERROR: Backup failed, continuing with normal process..." << std::endl;
+                        }
+                    } else {
+                        logFile << "Backup disabled (Backup = 0), skipping backup" << std::endl;
+                        logFile << "The original backup was already performed at \\SKSE\\Plugins\\Backup\\OBody_presetDistributionConfig.json" << std::endl;
+                    }
+
+                    logFile << std::endl;
+
+                    // --- 3. Leer el JSON existente COMPLETO ---
                     auto readResult = ReadCompleteJson(jsonOutputPath, processedData, logFile);
                     bool readSuccess = readResult.first;
                     std::string originalJsonContent = readResult.second;
@@ -1085,7 +1357,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                     int totalPresetsRemoved = 0;
                     int totalPluginsRemoved = 0;
                     int totalFilesProcessed = 0;
-
+                    
                     logFile << "Scanning for OBodyNG_PDA_*.ini files..." << std::endl;
                     logFile << "----------------------------------------------------" << std::endl;
 
@@ -1138,6 +1410,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                             // Verificar si es una clave válida y tiene contenido
                                             if (validKeys.count(key) && !value.empty()) {
                                                 ParsedRule rule = ParseRuleLine(key, value);
+
                                                 if (!rule.plugin.empty() && !rule.presets.empty()) {
                                                     rulesInFile++;
                                                     totalRulesProcessed++;
@@ -1151,13 +1424,15 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                         rule.applyCount == -3 || rule.applyCount == -4 ||
                                                         rule.applyCount == -5 || rule.applyCount > 0) {
                                                         shouldApply = true;
+
                                                         if (rule.applyCount > 0) {
                                                             needsUpdate = true;
                                                             newCount = rule.applyCount - 1;
                                                         } else if (rule.applyCount == -2 || rule.applyCount == -3) {
                                                             needsUpdate = true;
-                                                            newCount = 0;  // Actualizar a 0 después de remoción
+                                                            newCount = 0; // Actualizar a 0 después de remoción
                                                         }
+
                                                         // Para -4 y -5 (x- y x*), no actualizar INI (needsUpdate =
                                                         // false)
                                                     } else {
@@ -1165,8 +1440,19 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                         shouldApply = false;
                                                         rulesSkippedInFile++;
                                                         totalRulesSkipped++;
-                                                        logFile << "  Skipped (count=0): " << key
-                                                                << " -> Plugin: " << rule.plugin << std::endl;
+
+                                                        if (rule.extra != "0") {
+                                                            // Modo inválido/garbage detectado: actualizar INI a |0
+                                                            needsUpdate = true;
+                                                            newCount = 0;
+                                                            rule.applyCount = newCount;
+                                                            fileLinesAndRules.push_back({originalLine, rule});
+                                                            logFile << "  Skipped (invalid mode detected in extra '" << rule.extra << "', setting to 0): " << key
+                                                                    << " -> Plugin: " << rule.plugin << std::endl;
+                                                        } else {
+                                                            logFile << "  Skipped (count=0): " << key
+                                                                    << " -> Plugin: " << rule.plugin << std::endl;
+                                                        }
                                                     }
 
                                                     if (shouldApply) {
@@ -1208,7 +1494,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                                 std::string targetPreset = preset;
                                                                 if (!targetPreset.empty() && targetPreset[0] == '!') {
                                                                     targetPreset = targetPreset.substr(
-                                                                        1);  // Strip ! from rule preset
+                                                                        1); // Strip ! from rule preset
                                                                 }
 
                                                                 size_t beforeCount = data.getTotalPresetCount();
@@ -1329,6 +1615,14 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                     logFile << std::endl << "====================================================" << std::endl;
                     logFile << "SUMMARY:" << std::endl;
+
+                    // Agregar información de backup al summary
+                    if (backupPerformed) {
+                        logFile << "Original JSON backup: SUCCESS (" << backupFileSize << " bytes)" << std::endl;
+                    } else {
+                        logFile << "Original JSON backup: SKIPPED (Backup=0)" << std::endl;
+                    }
+
                     logFile << "Total .ini files processed: " << totalFilesProcessed << std::endl;
                     logFile << "Total rules processed: " << totalRulesProcessed << std::endl;
                     logFile << "Total rules applied: " << totalRulesApplied << std::endl;
@@ -1349,7 +1643,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                     // --- 5. Actualizar selectivamente el JSON preservando el resto ---
                     logFile << "Updating JSON at: " << jsonOutputPath.string() << std::endl;
-
                     std::string updatedJson = UpdateJsonSelectively(originalJsonContent, processedData);
 
                     std::ofstream jsonFile(jsonOutputPath);
@@ -1371,9 +1664,20 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         logFile << "SUCCESS: JSON file updated successfully (preserving existing data and order)."
                                 << std::endl;
 
+                        // Espacio en blanco antes del mensaje
+                        RE::ConsoleLog::GetSingleton()->Print(" ");
+
                         // Mensaje de éxito en la consola del juego con Full SUMMARY
                         std::string consoleMsg =
-                            "OBody Assistant SUMMARY: Total .ini files processed: " +
+                            "OBody Assistant SUMMARY: ";
+
+                        // Agregar información de backup al mensaje de consola
+                        if (backupPerformed) {
+                            consoleMsg += "Backup: SUCCESS (" + std::to_string(backupFileSize) + " bytes), ";
+                        }
+
+                        consoleMsg +=
+                            "Total .ini files processed: " +
                             std::to_string(totalFilesProcessed) +
                             ", Total rules processed: " + std::to_string(totalRulesProcessed) +
                             ", Total rules applied: " + std::to_string(totalRulesApplied) +
@@ -1399,6 +1703,9 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                             "All the process and elements analysis can be read in the "
                             "OBody_NG_Preset_Distribution_Assistant-NG.log inside SKSE.";
                         RE::ConsoleLog::GetSingleton()->Print(logMsg.c_str());
+
+                        // Espacio en blanco después del mensaje
+                        RE::ConsoleLog::GetSingleton()->Print(" ");
                     }
 
                     logFile << std::endl << "Process completed successfully." << std::endl;
@@ -1413,7 +1720,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         });
 
         return true;
-
     } catch (const std::exception& e) {
         return false;
     } catch (...) {
