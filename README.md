@@ -111,14 +111,12 @@ Updated INI configuration example with "true" support:
 
 ```
 [Original backup]
-Backup = true  ; Always backup mode: Performs literal backup every execution, without auto-disabling. Use for development/testing.
+Backup = true  ; Always backup mode: Performs literal backup every execution, without auto-disabling.
 ; Backup = 1    ; One-time backup (default): Enables backup once, then sets to 0.
 ; Backup = 0    ; Disabled: Skips backup entirely.
 ```
 
 - **Support for Larger JSONs**: The file size limit has been increased to 50MB (previously 1MB), with binary reading (`std::ios::binary`) to handle special encodings without alterations. Plugin and preset parsing uses optimized loops with `reserve()` on vectors (e.g., 200 for results, 50 for presets per plugin) for memory efficiency. The bug reported by Cryshy in JSONs over 7000 lines is resolved, where the previous manual parsing failed on iterations or complex escapes; now it correctly handles escapes (e.g., backslashes in preset names) and raised iteration limits to 100,000 with safeguards against infinite loops.
-
-- **Ultra-Safe Atomic Writing**: JSON updates are written first to a temporary file (.tmp), validated with the triple check, and only if it passes is it atomically renamed to the final file. If validation fails, the .tmp is moved to /Backup/Analysis/ with a timestamp (e.g., OBody_presetDistributionConfig_corrupted_20250914_204034.json) for forensic analysis, and overwriting the original is avoided.
 
 - **Automatic Restoration and Forensic Analysis**: If corruption is detected in the original JSON (during reading or post-writing), the plugin automatically restores from the backup (only if the backup passes validation), moves the corrupted file to the analysis folder, and retries the process. This prevents CTDs and data loss in setups with conflicting mods.
 
