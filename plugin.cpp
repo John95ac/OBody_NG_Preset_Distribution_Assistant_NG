@@ -1,17 +1,17 @@
+#include <RE/Skyrim.h>
+#include <REL/Relocation.h>
+#include <SKSE/SKSE.h>
 #include <shlobj.h>
 #include <windows.h>
 
 #include <algorithm>
-#include <cctype>
 #include <chrono>
-#include <cstdio>
-#include <exception>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <map>
-#include <memory>
-#include <regex>
 #include <set>
 #include <sstream>
 #include <string>
@@ -24,26 +24,22 @@ namespace fs = std::filesystem;
 
 std::string SafeWideStringToString(const std::wstring& wstr) {
     if (wstr.empty()) return std::string();
-
     try {
         int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
         if (size_needed <= 0) {
             size_needed = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
             if (size_needed <= 0) return std::string();
-
             std::string result(size_needed, 0);
             int converted =
                 WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), (int)wstr.size(), &result[0], size_needed, NULL, NULL);
             if (converted <= 0) return std::string();
             return result;
         }
-
         std::string result(size_needed, 0);
         int converted =
             WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), &result[0], size_needed, NULL, NULL);
         if (converted <= 0) return std::string();
         return result;
-
     } catch (...) {
         std::string result;
         result.reserve(wstr.size());
@@ -83,7 +79,6 @@ struct OrderedPluginData {
     void addPreset(const std::string& plugin, const std::string& preset) {
         auto it = std::find_if(orderedData.begin(), orderedData.end(),
                                [&plugin](const auto& pair) { return pair.first == plugin; });
-
         if (it == orderedData.end()) {
             orderedData.emplace_back(plugin, std::vector<std::string>{preset});
             orderedData.back().second.reserve(20);
@@ -98,7 +93,6 @@ struct OrderedPluginData {
     void removePreset(const std::string& plugin, const std::string& preset) {
         auto it = std::find_if(orderedData.begin(), orderedData.end(),
                                [&plugin](const auto& pair) { return pair.first == plugin; });
-
         if (it != orderedData.end()) {
             auto& presets = it->second;
             auto presetIt = std::find_if(presets.begin(), presets.end(), [&preset](const std::string& p) {
@@ -106,15 +100,12 @@ struct OrderedPluginData {
                 if (!strippedP.empty() && strippedP[0] == '!') {
                     strippedP = strippedP.substr(1);
                 }
-
                 std::string strippedTarget = preset;
                 if (!strippedTarget.empty() && strippedTarget[0] == '!') {
                     strippedTarget = strippedTarget.substr(1);
                 }
-
                 return strippedP == strippedTarget;
             });
-
             if (presetIt != presets.end()) {
                 presets.erase(presetIt);
                 if (presets.empty()) {
@@ -147,6 +138,226 @@ struct OrderedPluginData {
         return count;
     }
 };
+
+// ===== NUEVA FUNCIÓN: VALIDACIÓN SIMPLE DE INTEGRIDAD JSON AL INICIO =====
+
+bool PerformSimpleJsonIntegrityCheck(const fs::path& jsonPath, std::ofstream& logFile) {
+    try {
+        logFile << "Performing SIMPLE JSON integrity check at startup..." << std::endl;
+        logFile << "----------------------------------------------------" << std::endl;
+
+        // Verificar que el archivo existe
+        if (!fs::exists(jsonPath)) {
+            logFile << "ERROR: JSON file does not exist at: " << jsonPath.string() << std::endl;
+            return false;
+        }
+
+        // Verificar tamaño mínimo
+        auto fileSize = fs::file_size(jsonPath);
+        if (fileSize < 10) {
+            logFile << "ERROR: JSON file is too small (" << fileSize << " bytes)" << std::endl;
+            return false;
+        }
+
+        // Leer el contenido completo SIN MODIFICAR
+        std::ifstream jsonFile(jsonPath, std::ios::binary);
+        if (!jsonFile.is_open()) {
+            logFile << "ERROR: Cannot open JSON file for integrity check" << std::endl;
+            return false;
+        }
+
+        std::string content;
+        jsonFile.seekg(0, std::ios::end);
+        size_t contentSize = jsonFile.tellg();
+        jsonFile.seekg(0, std::ios::beg);
+        content.resize(contentSize);
+        jsonFile.read(&content[0], contentSize);
+        jsonFile.close();
+
+        if (content.empty()) {
+            logFile << "ERROR: JSON file is empty after reading" << std::endl;
+            return false;
+        }
+
+        logFile << "JSON file size: " << fileSize << " bytes" << std::endl;
+
+        // VALIDACIÓN 1: Estructura básica de JSON
+        content = content.substr(content.find_first_not_of(" \t\r\n"));
+        content = content.substr(0, content.find_last_not_of(" \t\r\n") + 1);
+
+        if (!content.starts_with('{') || !content.ends_with('}')) {
+            logFile << "ERROR: JSON does not start with '{' or end with '}'" << std::endl;
+            return false;
+        }
+
+        // VALIDACIÓN 2: Balance de llaves, corchetes y paréntesis
+        int braceCount = 0;    // {}
+        int bracketCount = 0;  // []
+        int parenCount = 0;    // ()
+        bool inString = false;
+        bool escape = false;
+        int line = 1;
+        int col = 1;
+
+        for (size_t i = 0; i < content.length(); i++) {
+            char c = content[i];
+            if (c == '\n') {
+                line++;
+                col = 1;
+                continue;
+            }
+            col++;
+
+            if (escape) {
+                escape = false;
+                continue;
+            }
+
+            if (c == '\\') {
+                escape = true;
+                continue;
+            }
+
+            if (c == '"') {
+                inString = !inString;
+                continue;
+            }
+
+            if (!inString) {
+                switch (c) {
+                    case '{':
+                        braceCount++;
+                        break;
+                    case '}':
+                        braceCount--;
+                        if (braceCount < 0) {
+                            logFile << "ERROR: Unbalanced closing brace '}' at line " << line << ", column " << col
+                                    << std::endl;
+                            return false;
+                        }
+                        break;
+                    case '[':
+                        bracketCount++;
+                        break;
+                    case ']':
+                        bracketCount--;
+                        if (bracketCount < 0) {
+                            logFile << "ERROR: Unbalanced closing bracket ']' at line " << line << ", column " << col
+                                    << std::endl;
+                            return false;
+                        }
+                        break;
+                    case '(':
+                        parenCount++;
+                        break;
+                    case ')':
+                        parenCount--;
+                        if (parenCount < 0) {
+                            logFile << "ERROR: Unbalanced closing parenthesis ')' at line " << line << ", column "
+                                    << col << std::endl;
+                            return false;
+                        }
+                        break;
+                }
+            }
+        }
+
+        // Verificar balance final
+        if (braceCount != 0) {
+            logFile << "ERROR: Unbalanced braces (missing " << (braceCount > 0 ? "closing" : "opening")
+                    << " braces: " << abs(braceCount) << ")" << std::endl;
+            return false;
+        }
+
+        if (bracketCount != 0) {
+            logFile << "ERROR: Unbalanced brackets (missing " << (bracketCount > 0 ? "closing" : "opening")
+                    << " brackets: " << abs(bracketCount) << ")" << std::endl;
+            return false;
+        }
+
+        if (parenCount != 0) {
+            logFile << "ERROR: Unbalanced parentheses (missing " << (parenCount > 0 ? "closing" : "opening")
+                    << " parentheses: " << abs(parenCount) << ")" << std::endl;
+            return false;
+        }
+
+        // VALIDACIÓN 3: Verificar que contiene las claves básicas esperadas de OBody
+        const std::vector<std::string> expectedKeys = {
+            "npcFormID",       "npc",           "factionFemale", "factionMale",
+            "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+
+        int foundKeys = 0;
+        for (const auto& key : expectedKeys) {
+            if (content.find("\"" + key + "\"") != std::string::npos) {
+                foundKeys++;
+            }
+        }
+
+        if (foundKeys < 6) {  // Al menos 6 de las 8 claves esperadas
+            logFile << "ERROR: JSON appears to be corrupted or not a valid OBody config file" << std::endl;
+            logFile << " Expected at least 6 OBody keys, found only " << foundKeys << std::endl;
+            return false;
+        }
+
+        // VALIDACIÓN 4: Verificar sintaxis básica de comas
+        std::string cleanContent = content;
+        // Remover strings para evitar falsos positivos
+        bool inStr = false;
+        bool esc = false;
+        for (size_t i = 0; i < cleanContent.length(); i++) {
+            if (esc) {
+                cleanContent[i] = ' ';
+                esc = false;
+                continue;
+            }
+
+            if (cleanContent[i] == '\\') {
+                esc = true;
+                cleanContent[i] = ' ';
+                continue;
+            }
+
+            if (cleanContent[i] == '"') {
+                inStr = !inStr;
+                cleanContent[i] = ' ';
+                continue;
+            }
+
+            if (inStr) {
+                cleanContent[i] = ' ';
+            }
+        }
+
+        // Verificar patrones problemáticos
+        if (cleanContent.find(",,") != std::string::npos) {
+            logFile << "ERROR: Found double comma ',,' in JSON structure" << std::endl;
+            return false;
+        }
+
+        if (cleanContent.find(",}") != std::string::npos) {
+            logFile << "WARNING: Found comma before closing brace ',}' (may cause issues)" << std::endl;
+        }
+
+        if (cleanContent.find(",]") != std::string::npos) {
+            logFile << "WARNING: Found comma before closing bracket ',]' (may cause issues)" << std::endl;
+        }
+
+        logFile << "SUCCESS: JSON passed SIMPLE integrity check!" << std::endl;
+        logFile << " Found " << foundKeys << " valid OBody keys" << std::endl;
+        logFile << " Braces balanced: " << (braceCount == 0 ? "YES" : "NO") << std::endl;
+        logFile << " Brackets balanced: " << (bracketCount == 0 ? "YES" : "NO") << std::endl;
+        logFile << " Basic structure: VALID" << std::endl;
+        logFile << std::endl;
+
+        return true;
+    } catch (const std::exception& e) {
+        logFile << "ERROR in PerformSimpleJsonIntegrityCheck: " << e.what() << std::endl;
+        return false;
+    } catch (...) {
+        logFile << "ERROR in PerformSimpleJsonIntegrityCheck: Unknown exception" << std::endl;
+        return false;
+    }
+}
 
 // ===== FUNCIONES DE RUTA ULTRA-SEGURAS =====
 
@@ -319,26 +530,24 @@ ParsedRule ParseRuleLine(const std::string& key, const std::string& value) {
             rule.extra = Trim(parts[2]);
             if (rule.extra.empty()) {
                 rule.applyCount = -1;
+            } else if (rule.extra == "x" || rule.extra == "X") {
+                rule.applyCount = -1;
+            } else if (rule.extra == "x-" || rule.extra == "X-") {
+                rule.applyCount = -4;
+            } else if (rule.extra == "x*" || rule.extra == "X*") {
+                rule.applyCount = -5;
+            } else if (rule.extra == "-") {
+                rule.applyCount = -2;
+            } else if (rule.extra == "*") {
+                rule.applyCount = -3;
             } else {
-                if (rule.extra == "x" || rule.extra == "X") {
-                    rule.applyCount = -1;
-                } else if (rule.extra == "x-" || rule.extra == "X-") {
-                    rule.applyCount = -4;
-                } else if (rule.extra == "x*" || rule.extra == "X*") {
-                    rule.applyCount = -5;
-                } else if (rule.extra == "-") {
-                    rule.applyCount = -2;
-                } else if (rule.extra == "*") {
-                    rule.applyCount = -3;
-                } else {
-                    try {
-                        rule.applyCount = std::stoi(rule.extra);
-                        if (rule.applyCount != 0 && rule.applyCount != 1) {
-                            rule.applyCount = 0;
-                        }
-                    } catch (...) {
+                try {
+                    rule.applyCount = std::stoi(rule.extra);
+                    if (rule.applyCount != 0 && rule.applyCount != 1) {
                         rule.applyCount = 0;
                     }
+                } catch (...) {
+                    rule.applyCount = 0;
                 }
             }
         } else {
@@ -419,7 +628,6 @@ int ReadBackupConfigFromIni(const fs::path& iniPath, std::ofstream& logFile) {
 
         iniFile.close();
         return backupValue;
-
     } catch (const std::exception& e) {
         logFile << "ERROR in ReadBackupConfigFromIni: " << e.what() << std::endl;
         return 0;
@@ -501,7 +709,6 @@ void UpdateBackupConfigInIni(const fs::path& iniPath, std::ofstream& logFile, in
         }
 
         outFile.close();
-
         if (outFile.fail()) {
             logFile << "ERROR: Failed to write backup config INI file!" << std::endl;
         } else {
@@ -550,6 +757,7 @@ bool PerformLiteralJsonBackup(const fs::path& originalJsonPath, const fs::path& 
                         << std::endl;
                 return false;
             }
+
         } catch (...) {
             logFile << "SUCCESS: LITERAL JSON backup completed (size verification failed but backup exists)"
                     << std::endl;
@@ -625,6 +833,7 @@ bool PerformTripleValidation(const fs::path& jsonPath, const fs::path& backupPat
                 else if (c == ']')
                     bracketCount--;
             }
+
             escape = (c == '\\' && !escape);
         }
 
@@ -655,7 +864,6 @@ bool PerformTripleValidation(const fs::path& jsonPath, const fs::path& backupPat
         logFile << "SUCCESS: JSON file passed TRIPLE validation (" << fileSize << " bytes, " << foundKeys
                 << " valid keys found)" << std::endl;
         return true;
-
     } catch (const std::exception& e) {
         logFile << "ERROR in PerformTripleValidation: " << e.what() << std::endl;
         return false;
@@ -699,7 +907,6 @@ bool MoveCorruptedJsonToAnalysis(const fs::path& corruptedJsonPath, const fs::pa
 
         logFile << "SUCCESS: Corrupted JSON moved to analysis folder: " << analysisFile.string() << std::endl;
         return true;
-
     } catch (const std::exception& e) {
         logFile << "ERROR in MoveCorruptedJsonToAnalysis: " << e.what() << std::endl;
         return false;
@@ -759,7 +966,423 @@ bool RestoreJsonFromBackup(const fs::path& backupJsonPath, const fs::path& origi
     }
 }
 
-// ===== PARSER JSON CONSERVADOR (SOLO MODIFICA LAS 8 CLAVES VÁLIDAS) =====
+// ===== NUEVA FUNCIÓN MEJORADA: CORRECCIÓN COMPLETA DE INDENTACIÓN CON EMPTY INLINE Y MULTI-LINE EMPTY DETECTION =====
+
+bool CorrectJsonIndentation(const fs::path& jsonPath, const fs::path& analysisDir, std::ofstream& logFile) {
+    try {
+        logFile << "Checking and correcting JSON indentation hierarchy..." << std::endl;
+        logFile << "----------------------------------------------------" << std::endl;
+
+        // Leer el JSON actual
+        if (!fs::exists(jsonPath)) {
+            logFile << "ERROR: JSON file does not exist for indentation correction" << std::endl;
+            return false;
+        }
+
+        std::ifstream jsonFile(jsonPath, std::ios::binary);
+        if (!jsonFile.is_open()) {
+            logFile << "ERROR: Cannot open JSON file for indentation correction" << std::endl;
+            return false;
+        }
+
+        std::string originalContent;
+        jsonFile.seekg(0, std::ios::end);
+        size_t contentSize = jsonFile.tellg();
+        jsonFile.seekg(0, std::ios::beg);
+        originalContent.resize(contentSize);
+        jsonFile.read(&originalContent[0], contentSize);
+        jsonFile.close();
+
+        if (originalContent.empty()) {
+            logFile << "ERROR: JSON file is empty for indentation correction" << std::endl;
+            return false;
+        }
+
+        // Verificar si necesita corrección
+        bool needsCorrection = false;
+        std::vector<std::string> lines;
+        std::stringstream ss(originalContent);
+        std::string line;
+
+        while (std::getline(ss, line)) {
+            lines.push_back(line);
+        }
+
+        // Analizar indentación actual - verificar si NO cumple con exactamente 4 espacios por nivel
+        for (const auto& currentLine : lines) {
+            if (currentLine.empty()) continue;
+            if (currentLine.find_first_not_of(" \t") == std::string::npos) continue;  // Solo espacios
+
+            size_t leadingSpaces = 0;
+            size_t leadingTabs = 0;
+            for (char c : currentLine) {
+                if (c == ' ')
+                    leadingSpaces++;
+                else if (c == '\t')
+                    leadingTabs++;
+                else
+                    break;
+            }
+
+            // Si hay tabs O si los espacios no son múltiplos exactos de 4, necesita corrección
+            if (leadingTabs > 0 || (leadingSpaces > 0 && leadingSpaces % 4 != 0)) {
+                needsCorrection = true;
+                break;
+            }
+        }
+
+        // NUEVA VERIFICACIÓN: Detectar contenedores vacíos multi-línea que necesitan corrección
+        if (!needsCorrection) {
+            // Buscar patrones como:
+            // "key": {
+            //     },
+            // o
+            // "key": [
+            //     ],
+
+            for (size_t i = 0; i < lines.size() - 1; i++) {
+                std::string currentTrimmed = Trim(lines[i]);
+
+                // Verificar si la línea actual termina con { o [
+                if (currentTrimmed.ends_with("{") || currentTrimmed.ends_with("[")) {
+                    char openChar = currentTrimmed.back();
+                    char closeChar = (openChar == '{') ? '}' : ']';
+
+                    // Buscar la línea de cierre correspondiente
+                    for (size_t j = i + 1; j < lines.size(); j++) {
+                        std::string nextTrimmed = Trim(lines[j]);
+
+                        // Si encontramos el carácter de cierre
+                        if (nextTrimmed == std::string(1, closeChar) ||
+                            nextTrimmed == std::string(1, closeChar) + ",") {
+                            // Verificar si hay solo espacios en blanco entre apertura y cierre
+                            bool hasOnlyWhitespace = true;
+                            for (size_t k = i + 1; k < j; k++) {
+                                if (!Trim(lines[k]).empty()) {
+                                    hasOnlyWhitespace = false;
+                                    break;
+                                }
+                            }
+
+                            if (hasOnlyWhitespace) {
+                                needsCorrection = true;
+                                logFile << "DETECTED: Multi-line empty container found at lines " << (i + 1) << "-"
+                                        << (j + 1) << ", needs inline correction" << std::endl;
+                                break;
+                            }
+                        }
+
+                        // Si encontramos contenido real, no es un contenedor vacío
+                        if (!nextTrimmed.empty() && nextTrimmed != std::string(1, closeChar) &&
+                            nextTrimmed != std::string(1, closeChar) + ",") {
+                            break;
+                        }
+                    }
+
+                    if (needsCorrection) break;
+                }
+            }
+        }
+
+        if (!needsCorrection) {
+            logFile << "SUCCESS: JSON indentation is already correct (perfect 4-space hierarchy with inline empty "
+                       "containers)"
+                    << std::endl;
+            logFile << std::endl;
+            return true;
+        }
+
+        logFile << "DETECTED: JSON indentation needs correction - reformatting entire file with perfect 4-space "
+                   "hierarchy and inline empty containers..."
+                << std::endl;
+
+        // ALGORITMO MEJORADO: Reformat completo con exactamente 4 espacios por nivel + MEJOR DETECCIÓN DE EMPTY
+        // CONTAINERS
+        std::ostringstream correctedJson;
+        int indentLevel = 0;
+        bool inString = false;
+        bool escape = false;
+
+        // ===== FUNCIÓN HELPER MEJORADA PARA DETECTAR SI UN BLOQUE ESTÁ VACÍO (INCLUYENDO MULTI-LÍNEA) =====
+        auto isEmptyBlock = [&originalContent](size_t startPos, char openChar, char closeChar) -> bool {
+            size_t pos = startPos + 1;
+            int depth = 1;
+            bool inStr = false;
+            bool esc = false;
+
+            while (pos < originalContent.length() && depth > 0) {
+                char c = originalContent[pos];
+
+                if (esc) {
+                    esc = false;
+                    pos++;
+                    continue;
+                }
+
+                if (c == '\\' && inStr) {
+                    esc = true;
+                    pos++;
+                    continue;
+                }
+
+                if (c == '"') {
+                    inStr = !inStr;
+                } else if (!inStr) {
+                    if (c == openChar) {
+                        depth++;
+                    } else if (c == closeChar) {
+                        depth--;
+                        if (depth == 0) {
+                            // Encontrado el cierre, verificar si solo hay espacios en blanco entre apertura y cierre
+                            std::string between = originalContent.substr(startPos + 1, pos - startPos - 1);
+                            std::string trimmedBetween = Trim(between);
+                            return trimmedBetween.empty();  // Solo espacios en blanco o completamente vacío
+                        }
+                    }
+                }
+                pos++;
+            }
+            return false;
+        };
+
+        for (size_t i = 0; i < originalContent.length(); i++) {
+            char c = originalContent[i];
+
+            if (escape) {
+                correctedJson << c;
+                escape = false;
+                continue;
+            }
+
+            if (c == '\\' && inString) {
+                correctedJson << c;
+                escape = true;
+                continue;
+            }
+
+            if (c == '"' && !escape) {
+                inString = !inString;
+                correctedJson << c;
+                continue;
+            }
+
+            if (inString) {
+                correctedJson << c;
+                continue;
+            }
+
+            switch (c) {
+                case '{':
+                case '[':
+                    // NUEVA LÓGICA MEJORADA: Verificar si es un bloque vacío (incluyendo multi-línea)
+                    if (isEmptyBlock(i, c, (c == '{') ? '}' : ']')) {
+                        // Encontrar el carácter de cierre
+                        size_t pos = i + 1;
+                        int depth = 1;
+                        bool inStr = false;
+                        bool esc = false;
+
+                        while (pos < originalContent.length() && depth > 0) {
+                            char nextChar = originalContent[pos];
+
+                            if (esc) {
+                                esc = false;
+                                pos++;
+                                continue;
+                            }
+
+                            if (nextChar == '\\' && inStr) {
+                                esc = true;
+                                pos++;
+                                continue;
+                            }
+
+                            if (nextChar == '"') {
+                                inStr = !inStr;
+                            } else if (!inStr) {
+                                if (nextChar == c) {
+                                    depth++;
+                                } else if (nextChar == ((c == '{') ? '}' : ']')) {
+                                    depth--;
+                                }
+                            }
+                            pos++;
+                        }
+
+                        // Escribir el bloque vacío en la misma línea
+                        correctedJson << c << ((c == '{') ? '}' : ']');
+                        i = pos - 1;  // Saltar hasta después del carácter de cierre
+
+                        // Verificar si necesitamos nueva línea después
+                        if (i + 1 < originalContent.length()) {
+                            size_t nextNonSpace = i + 1;
+                            while (nextNonSpace < originalContent.length() &&
+                                   std::isspace(originalContent[nextNonSpace])) {
+                                nextNonSpace++;
+                            }
+
+                            if (nextNonSpace < originalContent.length() && originalContent[nextNonSpace] != ',' &&
+                                originalContent[nextNonSpace] != '}' && originalContent[nextNonSpace] != ']') {
+                                correctedJson << '\n';
+                                for (int j = 0; j < indentLevel * 4; j++) {
+                                    correctedJson << ' ';
+                                }
+                            }
+                        }
+                    } else {
+                        // Bloque NO vacío: usar formato normal
+                        correctedJson << c << '\n';
+                        indentLevel++;
+                        // Agregar indentación exacta de 4 espacios por nivel
+                        for (int j = 0; j < indentLevel * 4; j++) {
+                            correctedJson << ' ';
+                        }
+                    }
+                    break;
+
+                case '}':
+                case ']':
+                    // Ir a nueva línea y reducir indentación
+                    correctedJson << '\n';
+                    indentLevel--;
+                    for (int j = 0; j < indentLevel * 4; j++) {
+                        correctedJson << ' ';
+                    }
+                    correctedJson << c;
+
+                    // Verificar si necesitamos nueva línea después
+                    if (i + 1 < originalContent.length()) {
+                        size_t nextNonSpace = i + 1;
+                        while (nextNonSpace < originalContent.length() && std::isspace(originalContent[nextNonSpace])) {
+                            nextNonSpace++;
+                        }
+
+                        if (nextNonSpace < originalContent.length() && originalContent[nextNonSpace] != ',' &&
+                            originalContent[nextNonSpace] != '}' && originalContent[nextNonSpace] != ']') {
+                            correctedJson << '\n';
+                            for (int j = 0; j < indentLevel * 4; j++) {
+                                correctedJson << ' ';
+                            }
+                        }
+                    }
+                    break;
+
+                case ',':
+                    correctedJson << c << '\n';
+                    // Agregar indentación exacta para la siguiente línea
+                    for (int j = 0; j < indentLevel * 4; j++) {
+                        correctedJson << ' ';
+                    }
+                    break;
+
+                case ':':
+                    correctedJson << c << ' ';
+                    break;
+
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\r':
+                    // Ignorar espacios en blanco existentes - los controlamos nosotros
+                    break;
+
+                default:
+                    correctedJson << c;
+                    break;
+            }
+        }
+
+        std::string correctedContent = correctedJson.str();
+
+        // Limpiar líneas vacías con solo espacios y normalizar
+        std::vector<std::string> finalLines;
+        std::stringstream finalSS(correctedContent);
+        std::string finalLine;
+
+        while (std::getline(finalSS, finalLine)) {
+            // Eliminar espacios al final de línea
+            while (!finalLine.empty() && finalLine.back() == ' ') {
+                finalLine.pop_back();
+            }
+            finalLines.push_back(finalLine);
+        }
+
+        // Reconstruir el JSON final
+        std::ostringstream finalJson;
+        for (size_t i = 0; i < finalLines.size(); i++) {
+            finalJson << finalLines[i];
+            if (i < finalLines.size() - 1) {
+                finalJson << '\n';
+            }
+        }
+
+        std::string finalContent = finalJson.str();
+
+        // Escribir el JSON corregido
+        fs::path tempPath = jsonPath;
+        tempPath.replace_extension(".indent_corrected.tmp");
+
+        std::ofstream tempFile(tempPath, std::ios::out | std::ios::trunc | std::ios::binary);
+        if (!tempFile.is_open()) {
+            logFile << "ERROR: Could not create temporary file for indentation correction!" << std::endl;
+            return false;
+        }
+
+        tempFile << finalContent;
+        tempFile.close();
+
+        if (tempFile.fail()) {
+            logFile << "ERROR: Failed to write corrected JSON to temporary file!" << std::endl;
+            return false;
+        }
+
+        // Verificar integridad del archivo corregido
+        if (!PerformTripleValidation(tempPath, fs::path(), logFile)) {
+            logFile << "ERROR: Corrected JSON failed integrity check!" << std::endl;
+            MoveCorruptedJsonToAnalysis(tempPath, analysisDir, logFile);
+            try {
+                fs::remove(tempPath);
+            } catch (...) {
+            }
+            return false;
+        }
+
+        // Reemplazar el archivo original
+        std::error_code ec;
+        fs::rename(tempPath, jsonPath, ec);
+
+        if (ec) {
+            logFile << "ERROR: Failed to replace original with corrected JSON: " << ec.message() << std::endl;
+            try {
+                fs::remove(tempPath);
+            } catch (...) {
+            }
+            return false;
+        }
+
+        // Verificación final
+        if (PerformTripleValidation(jsonPath, fs::path(), logFile)) {
+            logFile << "SUCCESS: JSON indentation corrected successfully!" << std::endl;
+            logFile << " Applied perfect 4-space hierarchy with inline empty containers (including multi-line empty "
+                       "detection)"
+                    << std::endl;
+            logFile << std::endl;
+            return true;
+        } else {
+            logFile << "ERROR: Final corrected JSON failed integrity check!" << std::endl;
+            return false;
+        }
+
+    } catch (const std::exception& e) {
+        logFile << "ERROR in CorrectJsonIndentation: " << e.what() << std::endl;
+        return false;
+    } catch (...) {
+        logFile << "ERROR in CorrectJsonIndentation: Unknown exception" << std::endl;
+        return false;
+    }
+}
+
+// ===== PARSER JSON CONSERVADOR CON FORMATO DE 4 ESPACIOS =====
 
 std::string PreserveOriginalSections(const std::string& originalJson,
                                      const std::map<std::string, OrderedPluginData>& processedData,
@@ -798,6 +1421,7 @@ std::string PreserveOriginalSections(const std::string& originalJson,
 
                             while (valueEnd < result.length() && braceCount > 0) {
                                 char c = result[valueEnd];
+
                                 if (c == '"' && !escape) {
                                     inString = !inString;
                                 } else if (!inString) {
@@ -806,11 +1430,12 @@ std::string PreserveOriginalSections(const std::string& originalJson,
                                     else if (c == '}')
                                         braceCount--;
                                 }
+
                                 escape = (c == '\\' && !escape);
                                 valueEnd++;
                             }
 
-                            // Generar nuevo valor preservando indentación
+                            // Generar nuevo valor con indentación de exactamente 4 espacios por nivel
                             std::ostringstream newValue;
                             newValue << "{\n";
 
@@ -819,24 +1444,28 @@ std::string PreserveOriginalSections(const std::string& originalJson,
                                 if (!first) newValue << ",\n";
                                 first = false;
 
+                                // Nivel 2: 8 espacios (2 niveles * 4 espacios)
                                 newValue << "        \"" << EscapeJson(plugin) << "\": [\n";
 
                                 bool firstPreset = true;
                                 for (const auto& preset : presets) {
                                     if (!firstPreset) newValue << ",\n";
                                     firstPreset = false;
+
+                                    // Nivel 3: 12 espacios (3 niveles * 4 espacios)
                                     newValue << "            \"" << EscapeJson(preset) << "\"";
                                 }
 
+                                // Cerrar array con nivel 2: 8 espacios
                                 newValue << "\n        ]";
                             }
 
+                            // Cerrar objeto con nivel 1: 4 espacios
                             newValue << "\n    }";
 
                             // Reemplazar el valor en el resultado
                             result.replace(valueStart, valueEnd - valueStart, newValue.str());
-
-                            logFile << "INFO: Successfully updated key '" << key << "' while preserving original format"
+                            logFile << "INFO: Successfully updated key '" << key << "' with proper 4-space indentation"
                                     << std::endl;
                         }
                     }
@@ -845,7 +1474,6 @@ std::string PreserveOriginalSections(const std::string& originalJson,
         }
 
         return result;
-
     } catch (const std::exception& e) {
         logFile << "ERROR in PreserveOriginalSections: " << e.what() << std::endl;
         return originalJson;  // Fallback al original
@@ -908,7 +1536,6 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
 
             ++pos;  // skip :
             while (pos < len && std::isspace(static_cast<unsigned char>(str[pos]))) ++pos;
-
             if (pos >= len || str[pos] != '[') {
                 ++pos;
                 continue;
@@ -918,8 +1545,8 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
 
             std::vector<std::string> presets;
             presets.reserve(50);
-
             size_t presetIter = 0;
+
             while (pos < len && presetIter++ < maxIters) {
                 while (pos < len && std::isspace(static_cast<unsigned char>(str[pos]))) ++pos;
                 if (pos >= len) break;
@@ -970,7 +1597,6 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
                 result.emplace_back(std::move(plugin), std::move(presets));
             }
         }
-
     } catch (...) {
         // En caso de error, retornar lo que se haya parseado
     }
@@ -1042,6 +1668,7 @@ std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
 
                         while (pos < jsonContent.length() && braceCount > 0) {
                             char c = jsonContent[pos];
+
                             if (c == '"' && !escape) {
                                 inString = !inString;
                             } else if (!inString) {
@@ -1055,6 +1682,7 @@ std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
                                     }
                                 }
                             }
+
                             escape = (c == '\\' && !escape);
                             pos++;
                         }
@@ -1083,10 +1711,9 @@ std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
                         << std::endl;
             }
         }
-
         logFile << std::endl;
-        return {true, jsonContent};
 
+        return {true, jsonContent};
     } catch (const std::exception& e) {
         logFile << "ERROR in ReadCompleteJson: " << e.what() << std::endl;
         return {false, ""};
@@ -1122,15 +1749,12 @@ bool WriteJsonAtomically(const fs::path& jsonPath, const std::string& content, c
         // Verificar integridad del archivo temporal
         if (!PerformTripleValidation(tempPath, fs::path(), logFile)) {
             logFile << "ERROR: Temporary JSON file failed integrity check!" << std::endl;
-
             // Mover archivo temporal defectuoso a análisis
             MoveCorruptedJsonToAnalysis(tempPath, analysisDir, logFile);
-
             try {
                 fs::remove(tempPath);
             } catch (...) {
             }
-
             return false;
         }
 
@@ -1153,7 +1777,6 @@ bool WriteJsonAtomically(const fs::path& jsonPath, const std::string& content, c
             return true;
         } else {
             logFile << "ERROR: Final JSON file failed integrity check!" << std::endl;
-
             // Mover archivo final defectuoso a análisis
             MoveCorruptedJsonToAnalysis(jsonPath, analysisDir, logFile);
             return false;
@@ -1180,12 +1803,12 @@ void UpdateIniRuleCount(const fs::path& iniPath, const std::string& originalLine
         while (std::getline(iniFile, line)) {
             lines.push_back(line);
         }
-
         iniFile.close();
 
         // Buscar y actualizar la línea
         for (auto& fileLine : lines) {
             std::string cleanLine = fileLine;
+
             size_t commentPos = cleanLine.find(';');
             if (commentPos != std::string::npos) {
                 cleanLine = cleanLine.substr(0, commentPos);
@@ -1223,11 +1846,12 @@ void UpdateIniRuleCount(const fs::path& iniPath, const std::string& originalLine
     }
 }
 
-// ===== FUNCIÓN PRINCIPAL CORREGIDA =====
+// ===== FUNCIÓN PRINCIPAL CORREGIDA CON CORRECCIÓN DE INDENTACIÓN =====
 
 extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface* skse) {
     try {
         SKSE::Init(skse);
+
         SKSE::GetMessagingInterface()->RegisterListener([](SKSE::MessagingInterface::Message* message) {
             try {
                 if (message->type == SKSE::MessagingInterface::kDataLoaded) {
@@ -1267,10 +1891,68 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                     localtime_s(&buf, &in_time_t);
 
                     logFile << "====================================================" << std::endl;
-                    logFile << "OBody NG Preset Distribution Assistant NG - ULTRA SECURE CORRECTED VERSION"
+                    logFile << "OBody NG Preset Distribution Assistant NG - ULTRA SECURE VERSION WITH INLINE EMPTY "
+                               "CONTAINERS AND MULTI-LINE EMPTY DETECTION"
                             << std::endl;
                     logFile << "Log created on: " << std::put_time(&buf, "%Y-%m-%d %H:%M:%S") << std::endl;
                     logFile << "====================================================" << std::endl << std::endl;
+
+                    // RUTAS PRINCIPALES (MODIFICADAS)
+                    fs::path backupConfigIniPath = sksePluginsPath / "OBody_NG_Preset_Distribution_Assistant_NG.ini";
+                    fs::path jsonOutputPath = sksePluginsPath / "OBody_presetDistributionConfig.json";
+                    fs::path backupJsonPath =
+                        sksePluginsPath / "Backup_OBody_DPA" / "OBody_presetDistributionConfig.json";
+                    fs::path analysisDir = sksePluginsPath / "Backup_OBody_DPA" / "Analysis";
+
+                    logFile << "Checking backup configuration..." << std::endl;
+                    logFile << "----------------------------------------------------" << std::endl;
+                    int backupValue = ReadBackupConfigFromIni(backupConfigIniPath, logFile);
+
+                    // ===== VALIDACIÓN DE INTEGRIDAD INICIAL CON RESTAURACIÓN AUTOMÁTICA (MODIFICADO) =====
+                    logFile << std::endl;
+                    if (!PerformSimpleJsonIntegrityCheck(jsonOutputPath, logFile)) {
+                        logFile << std::endl;
+                        logFile << "CRITICAL: JSON failed simple integrity check at startup! Attempting to restore "
+                                   "from backup..."
+                                << std::endl;
+
+                        // Intentar restaurar desde el backup
+                        if (RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
+                            logFile << "SUCCESS: JSON restored from backup. Proceeding with the normal process."
+                                    << std::endl;
+                            // El proceso puede continuar normalmente después de la restauración.
+                        } else {
+                            // La restauración falló o no se encontró un backup. Ahora terminamos.
+                            logFile << std::endl;
+                            logFile << "CRITICAL ERROR: Could not restore from backup. The JSON file is likely "
+                                       "corrupted and no valid backup is available."
+                                    << std::endl;
+                            logFile << "Process terminated to prevent further damage." << std::endl;
+                            logFile << std::endl;
+                            logFile << "RECOMMENDED ACTIONS:" << std::endl;
+                            logFile << "1. Check the analysis folder for the corrupted file: " << analysisDir.string()
+                                    << std::endl;
+                            logFile << "2. Manually check for any older backups or reinstall the mod providing the "
+                                       "base JSON file."
+                                    << std::endl;
+                            logFile << "3. Contact the mod author if the problem persists." << std::endl;
+                            logFile << "====================================================" << std::endl;
+                            logFile.close();
+
+                            RE::ConsoleLog::GetSingleton()->Print(
+                                "CRITICAL ERROR: OBody JSON is corrupted and could not be restored! Check the log file "
+                                "for details.");
+                            return;  // TERMINACIÓN TEMPRANA DEL PROCESO
+                        }
+                    }
+
+                    // Si llegamos aquí, el JSON pasó la validación simple o fue restaurado exitosamente
+                    logFile << "JSON passed initial integrity check or was restored - proceeding with normal process..."
+                            << std::endl;
+                    logFile << "JSON will be formatted with proper 4-space indentation hierarchy with inline empty "
+                               "containers and multi-line empty detection."
+                            << std::endl;
+                    logFile << std::endl;
 
                     // Inicializar estructuras de datos
                     const std::set<std::string> validKeys = {
@@ -1282,16 +1964,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         processedData[key] = OrderedPluginData();
                     }
 
-                    // RUTAS PRINCIPALES
-                    fs::path backupConfigIniPath = sksePluginsPath / "OBody_NG_Preset_Distribution_Assistant_NG.ini";
-                    fs::path jsonOutputPath = sksePluginsPath / "OBody_presetDistributionConfig.json";
-                    fs::path backupJsonPath = sksePluginsPath / "Backup" / "OBody_presetDistributionConfig.json";
-                    fs::path analysisDir = sksePluginsPath / "Backup" / "Analysis";
-
-                    logFile << "Checking backup configuration..." << std::endl;
-                    logFile << "----------------------------------------------------" << std::endl;
-
-                    int backupValue = ReadBackupConfigFromIni(backupConfigIniPath, logFile);
                     bool backupPerformed = false;
 
                     // SISTEMA DE BACKUP LITERAL PERFECTO
@@ -1305,7 +1977,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                         if (PerformLiteralJsonBackup(jsonOutputPath, backupJsonPath, logFile)) {
                             backupPerformed = true;
-
                             // Solo actualizar INI si no es modo "true" (valor 2)
                             if (backupValue != 2) {
                                 UpdateBackupConfigInIni(backupConfigIniPath, logFile, backupValue);
@@ -1313,11 +1984,13 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         } else {
                             logFile << "ERROR: LITERAL backup failed, continuing with normal process..." << std::endl;
                         }
+
                     } else {
                         logFile << "Backup disabled (Backup = 0), skipping backup" << std::endl;
-                        logFile << "The original backup was already performed at "
-                                   "\\SKSE\\Plugins\\Backup\\OBody_presetDistributionConfig.json"
-                                << std::endl;
+                        logFile
+                            << "The original backup was already performed at "
+                               "\\SKSE\\Plugins\\Backup_OBody_DPA\\OBody_presetDistributionConfig.json"  // MODIFICADO
+                            << std::endl;
                     }
 
                     logFile << std::endl;
@@ -1329,7 +2002,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                     if (!readSuccess) {
                         logFile << "JSON read failed, attempting to restore from backup..." << std::endl;
-
                         if (fs::exists(backupJsonPath) &&
                             RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
                             logFile << "Backup restoration successful, retrying JSON read..." << std::endl;
@@ -1344,6 +2016,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                 << std::endl;
                             logFile << "====================================================" << std::endl;
                             logFile.close();
+
                             RE::ConsoleLog::GetSingleton()->Print(
                                 "ERROR: JSON READ FAILED - CONTACT MODDER OR REINSTALL!");
                             return;
@@ -1367,7 +2040,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         for (const auto& entry : fs::directory_iterator(dataPath)) {
                             if (entry.is_regular_file()) {
                                 std::string filename = entry.path().filename().string();
-
                                 if (filename.starts_with("OBodyNG_PDA_") && filename.ends_with(".ini")) {
                                     logFile << std::endl << "Processing file: " << filename << std::endl;
                                     totalFilesProcessed++;
@@ -1385,7 +2057,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                     int rulesSkippedInFile = 0;
                                     int presetsRemovedInFile = 0;
                                     int pluginsRemovedInFile = 0;
-
                                     fileLinesAndRules.reserve(100);
 
                                     while (std::getline(iniFile, line)) {
@@ -1424,7 +2095,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                         rule.applyCount == -3 || rule.applyCount == -4 ||
                                                         rule.applyCount == -5 || rule.applyCount > 0) {
                                                         shouldApply = true;
-
                                                         if (rule.applyCount > 0) {
                                                             needsUpdate = true;
                                                             newCount = rule.applyCount - 1;
@@ -1432,6 +2102,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                             needsUpdate = true;
                                                             newCount = 0;
                                                         }
+
                                                     } else {
                                                         shouldApply = false;
                                                         rulesSkippedInFile++;
@@ -1457,7 +2128,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                         // Aplicar las reglas
                                                         if (rule.applyCount == -1) {
                                                             int presetsAdded = 0;
-
                                                             for (const auto& preset : rule.presets) {
                                                                 size_t beforeCount = data.getTotalPresetCount();
                                                                 data.addPreset(rule.plugin, preset);
@@ -1485,7 +2155,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                                                         } else if (rule.applyCount == -4 || rule.applyCount == -2) {
                                                             int presetsRemoved = 0;
-
                                                             for (const auto& preset : rule.presets) {
                                                                 std::string targetPreset = preset;
                                                                 if (!targetPreset.empty() && targetPreset[0] == '!') {
@@ -1504,7 +2173,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                                 totalRulesApplied++;
                                                                 totalPresetsRemoved += presetsRemoved;
                                                                 presetsRemovedInFile += presetsRemoved;
-
                                                                 logFile << "  Applied: " << key
                                                                         << " -> Plugin: " << rule.plugin
                                                                         << " -> Removed " << presetsRemoved
@@ -1530,7 +2198,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                                 totalRulesApplied++;
                                                                 totalPluginsRemoved++;
                                                                 pluginsRemovedInFile++;
-
                                                                 logFile << "  Applied: " << key
                                                                         << " -> Plugin: " << rule.plugin
                                                                         << " -> REMOVED ENTIRE PLUGIN";
@@ -1550,7 +2217,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                                                         } else if (rule.applyCount > 0) {
                                                             int presetsAdded = 0;
-
                                                             for (const auto& preset : rule.presets) {
                                                                 size_t beforeCount = data.getTotalPresetCount();
                                                                 data.addPreset(rule.plugin, preset);
@@ -1579,12 +2245,12 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                                                     << std::endl;
                                                             }
                                                         }
-                                                    }
 
-                                                    // Actualizar archivo INI si es necesario
-                                                    if (needsUpdate) {
-                                                        rule.applyCount = newCount;
-                                                        fileLinesAndRules.emplace_back(originalLine, rule);
+                                                        // Actualizar archivo INI si es necesario
+                                                        if (needsUpdate) {
+                                                            rule.applyCount = newCount;
+                                                            fileLinesAndRules.emplace_back(originalLine, rule);
+                                                        }
                                                     }
                                                 }
                                             }
@@ -1606,7 +2272,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                 }
                             }
                         }
-
                     } catch (const std::exception& e) {
                         logFile << "ERROR scanning directory: " << e.what() << std::endl;
                     }
@@ -1622,6 +2287,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         } catch (...) {
                             logFile << "Original JSON backup: SUCCESS (size verification failed)" << std::endl;
                         }
+
                     } else {
                         logFile << "Original JSON backup: SKIPPED" << std::endl;
                     }
@@ -1632,8 +2298,8 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                     logFile << "Total rules skipped (count=0): " << totalRulesSkipped << std::endl;
                     logFile << "Total presets removed (-): " << totalPresetsRemoved << std::endl;
                     logFile << "Total plugins removed (*): " << totalPluginsRemoved << std::endl;
-
                     logFile << std::endl << "Final data in JSON:" << std::endl;
+
                     for (const auto& [key, data] : processedData) {
                         size_t count = data.getTotalPresetCount();
                         if (count > 0) {
@@ -1644,22 +2310,44 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                     logFile << "====================================================" << std::endl << std::endl;
 
-                    // ACTUALIZAR JSON CONSERVADORAMENTE
+                    // ACTUALIZAR JSON CONSERVADORAMENTE CON FORMATO CORRECTO
                     logFile << "Updating JSON at: " << jsonOutputPath.string() << std::endl;
+                    logFile << "Applying proper 4-space indentation format with inline empty containers and multi-line "
+                               "empty detection..."
+                            << std::endl;
 
                     try {
-                        // Usar la función que preserva el formato original
+                        // Usar la función que preserva el formato original con indentación correcta
                         std::string updatedJsonContent =
                             PreserveOriginalSections(originalJsonContent, processedData, logFile);
 
                         // Escribir de manera atómica con verificación triple
                         if (WriteJsonAtomically(jsonOutputPath, updatedJsonContent, analysisDir, logFile)) {
-                            logFile << "SUCCESS: JSON updated successfully while preserving original structure!"
+                            logFile << "SUCCESS: JSON updated successfully with proper 4-space indentation hierarchy!"
                                     << std::endl;
+
+                            // ===== NUEVO PASO: CORRECCIÓN COMPLETA DE INDENTACIÓN CON EMPTY INLINE Y MULTI-LINE EMPTY
+                            // DETECTION =====
+                            logFile << std::endl;
+                            if (CorrectJsonIndentation(jsonOutputPath, analysisDir, logFile)) {
+                                logFile << "SUCCESS: JSON indentation verification and correction completed with "
+                                           "inline empty containers and multi-line empty detection!"
+                                        << std::endl;
+                            } else {
+                                logFile << "ERROR: JSON indentation correction failed!" << std::endl;
+                                logFile << "Attempting to restore from backup due to indentation failure..."
+                                        << std::endl;
+                                if (fs::exists(backupJsonPath) &&
+                                    RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
+                                    logFile << "SUCCESS: JSON restored from backup after indentation failure!"
+                                            << std::endl;
+                                } else {
+                                    logFile << "CRITICAL ERROR: Could not restore JSON from backup!" << std::endl;
+                                }
+                            }
                         } else {
                             logFile << "ERROR: Failed to write JSON safely!" << std::endl;
                             logFile << "Attempting to restore from backup due to write failure..." << std::endl;
-
                             if (fs::exists(backupJsonPath) &&
                                 RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
                                 logFile << "SUCCESS: JSON restored from backup after write failure!" << std::endl;
@@ -1670,7 +2358,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
                     } catch (const std::exception& e) {
                         logFile << "ERROR in JSON update process: " << e.what() << std::endl;
-
                         logFile << "Attempting to restore from backup due to update failure..." << std::endl;
                         if (fs::exists(backupJsonPath) &&
                             RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
@@ -1678,9 +2365,9 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         } else {
                             logFile << "CRITICAL ERROR: Could not restore JSON from backup!" << std::endl;
                         }
+
                     } catch (...) {
                         logFile << "ERROR in JSON update process: Unknown exception" << std::endl;
-
                         logFile << "Attempting to restore from backup due to unknown failure..." << std::endl;
                         if (fs::exists(backupJsonPath) &&
                             RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
@@ -1690,7 +2377,10 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         }
                     }
 
-                    logFile << std::endl << "Process completed successfully." << std::endl;
+                    logFile << std::endl
+                            << "Process completed successfully with perfect 4-space JSON formatting, inline empty "
+                               "containers, and multi-line empty detection."
+                            << std::endl;
                     logFile.close();
 
                     RE::ConsoleLog::GetSingleton()->Print("OBody Assistant: Process completed successfully!");
@@ -1704,7 +2394,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         });
 
         return true;
-
     } catch (const std::exception& e) {
         RE::ConsoleLog::GetSingleton()->Print("ERROR loading OBody Assistant plugin!");
         return false;
