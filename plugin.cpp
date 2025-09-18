@@ -1385,11 +1385,11 @@ bool CorrectJsonIndentation(const fs::path& jsonPath, const fs::path& analysisDi
 // ===== PARSER JSON CONSERVADOR CON FORMATO DE 4 ESPACIOS =====
 
 std::string PreserveOriginalSections(const std::string& originalJson,
-                                     const std::map<std::string, OrderedPluginData>& processedData,
-                                     std::ofstream& logFile) {
+                                      const std::map<std::string, OrderedPluginData>& processedData,
+                                      std::ofstream& logFile) {
     try {
         const std::set<std::string> validKeys = {"npcFormID",       "npc",           "factionFemale", "factionMale",
-                                                 "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+                                                  "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
 
         std::string result = originalJson;
 
@@ -1602,6 +1602,121 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
     }
 
     return result;
+}
+// ===== NUEVA FUNCIÓN: VERIFICACIÓN DE CAMBIOS NECESARIOS =====
+
+/**
+ * @brief Compara el JSON original con los datos procesados para ver si hay cambios reales.
+ *
+ * Itera sobre las 8 claves de configuración principales y compara el contenido
+ * de cada una entre la versión original leída del disco y la versión procesada
+ * después de aplicar las reglas INI.
+ *
+ * @param originalJson El contenido JSON tal como se leyó del archivo OBody_DPA.json.
+ * @param processedData El objeto JSON después de aplicar las reglas de los archivos INI.
+ * @return true si se detectaron cambios y se necesita escribir en el archivo, false en caso contrario.
+ */
+bool CheckIfChangesNeeded(const std::string& originalJson, const std::map<std::string, OrderedPluginData>& processedData) {
+    const std::vector<std::string> validKeys = {
+        "npcFormID", "npc", "factionFemale", "factionMale",
+        "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"
+    };
+
+    for (const auto& key : validKeys) {
+        // Verificar si la clave existe en processedData y tiene datos
+        auto it = processedData.find(key);
+        if (it != processedData.end() && !it->second.orderedData.empty()) {
+            // Buscar la clave en el JSON original
+            std::string keyPattern = "\"" + key + "\"";
+            size_t keyPos = originalJson.find(keyPattern);
+
+            if (keyPos != std::string::npos) {
+                // Encontrar el inicio del valor (después del :)
+                size_t colonPos = originalJson.find(":", keyPos);
+                if (colonPos != std::string::npos) {
+                    size_t valueStart = colonPos + 1;
+
+                    // Saltar espacios en blanco
+                    while (valueStart < originalJson.length() && std::isspace(originalJson[valueStart])) {
+                        valueStart++;
+                    }
+
+                    // Encontrar el final del valor
+                    size_t valueEnd = valueStart;
+                    if (valueStart < originalJson.length() && originalJson[valueStart] == '{') {
+                        int braceCount = 1;
+                        valueEnd = valueStart + 1;
+                        bool inString = false;
+                        bool escape = false;
+
+                        while (valueEnd < originalJson.length() && braceCount > 0) {
+                            char c = originalJson[valueEnd];
+
+                            if (c == '"' && !escape) {
+                                inString = !inString;
+                            } else if (!inString) {
+                                if (c == '{')
+                                    braceCount++;
+                                else if (c == '}')
+                                    braceCount--;
+                            }
+
+                            escape = (c == '\\' && !escape);
+                            valueEnd++;
+                        }
+                    }
+
+                    // Extraer el contenido actual de la clave en el JSON original
+                    std::string currentValue = originalJson.substr(valueStart, valueEnd - valueStart);
+
+                    // Generar el valor esperado basado en processedData
+                    std::ostringstream expectedValue;
+                    expectedValue << "{\n";
+
+                    bool first = true;
+                    for (const auto& [plugin, presets] : it->second.orderedData) {
+                        if (!first) expectedValue << ",\n";
+                        first = false;
+
+                        expectedValue << "        \"" << plugin << "\": [\n";
+
+                        bool firstPreset = true;
+                        for (const auto& preset : presets) {
+                            if (!firstPreset) expectedValue << ",\n";
+                            firstPreset = false;
+                            expectedValue << "            \"" << preset << "\"";
+                        }
+
+                        expectedValue << "\n        ]";
+                    }
+
+                    expectedValue << "\n    }";
+
+                    // Comparar valores (ignorando espacios en blanco)
+                    std::string cleanCurrent = currentValue;
+                    std::string cleanExpected = expectedValue.str();
+
+                    // Función helper para limpiar espacios
+                    auto cleanWhitespace = [](std::string& str) {
+                        str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
+                    };
+
+                    cleanWhitespace(cleanCurrent);
+                    cleanWhitespace(cleanExpected);
+
+                    if (cleanCurrent != cleanExpected) {
+                        return true; // Se necesita escribir
+                    }
+                }
+            } else {
+                // La clave no existe en el JSON original pero tiene datos procesados
+                return true; // Se necesita escribir
+            }
+        }
+    }
+
+    // Si el bucle termina sin encontrar diferencias, no hay cambios.
+    return false; // No se necesita escribir
 }
 
 std::pair<bool, std::string> ReadCompleteJson(const fs::path& jsonPath,
@@ -2321,18 +2436,51 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         std::string updatedJsonContent =
                             PreserveOriginalSections(originalJsonContent, processedData, logFile);
 
-                        // Escribir de manera atómica con verificación triple
-                        if (WriteJsonAtomically(jsonOutputPath, updatedJsonContent, analysisDir, logFile)) {
-                            logFile << "SUCCESS: JSON updated successfully with proper 4-space indentation hierarchy!"
-                                    << std::endl;
+                        // 🔧 NUEVO: Verificar si los cambios de las reglas ya están aplicados en el JSON
+                        if (CheckIfChangesNeeded(originalJsonContent, processedData)) {
+                            logFile << "Changes from INI rules require updating the master JSON file. Proceeding with atomic write..." << std::endl;
 
-                            // ===== NUEVO PASO: CORRECCIÓN COMPLETA DE INDENTACIÓN CON EMPTY INLINE Y MULTI-LINE EMPTY
-                            // DETECTION =====
-                            logFile << std::endl;
-                            if (CorrectJsonIndentation(jsonOutputPath, analysisDir, logFile)) {
-                                logFile << "SUCCESS: JSON indentation verification and correction completed with "
-                                           "inline empty containers and multi-line empty detection!"
+                            // Si hay cambios, ejecutar escritura atómica
+                            if (WriteJsonAtomically(jsonOutputPath, updatedJsonContent, analysisDir, logFile)) {
+                                logFile << "SUCCESS: JSON updated successfully with proper 4-space indentation hierarchy!"
                                         << std::endl;
+
+                                // ===== NUEVO PASO: CORRECCIÓN COMPLETA DE INDENTACIÓN CON EMPTY INLINE Y MULTI-LINE EMPTY
+                                // DETECTION =====
+                                logFile << std::endl;
+                                if (CorrectJsonIndentation(jsonOutputPath, analysisDir, logFile)) {
+                                    logFile << "SUCCESS: JSON indentation verification and correction completed with "
+                                               "inline empty containers and multi-line empty detection!"
+                                            << std::endl;
+                                } else {
+                                    logFile << "ERROR: JSON indentation correction failed!" << std::endl;
+                                    logFile << "Attempting to restore from backup due to indentation failure..."
+                                            << std::endl;
+                                    if (fs::exists(backupJsonPath) &&
+                                        RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
+                                        logFile << "SUCCESS: JSON restored from backup after indentation failure!"
+                                                << std::endl;
+                                    } else {
+                                        logFile << "CRITICAL ERROR: Could not restore JSON from backup!" << std::endl;
+                                    }
+                                }
+                            } else {
+                                logFile << "ERROR: Failed to write JSON safely!" << std::endl;
+                                logFile << "Attempting to restore from backup due to write failure..." << std::endl;
+                                if (fs::exists(backupJsonPath) &&
+                                    RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
+                                    logFile << "SUCCESS: JSON restored from backup after write failure!" << std::endl;
+                                } else {
+                                    logFile << "CRITICAL ERROR: Could not restore JSON from backup!" << std::endl;
+                                }
+                            }
+                        } else {
+                            // Si no hay cambios, omitir escritura y pasar directamente a corrección de indentación
+                            logFile << "No changes detected between INI rules and master JSON. Skipping redundant atomic write." << std::endl;
+
+                            // Siempre asegurar formato perfecto, incluso sin cambios
+                            if (CorrectJsonIndentation(jsonOutputPath, analysisDir, logFile)) {
+                                logFile << "JSON indentation is already perfect or has been corrected." << std::endl;
                             } else {
                                 logFile << "ERROR: JSON indentation correction failed!" << std::endl;
                                 logFile << "Attempting to restore from backup due to indentation failure..."
@@ -2344,15 +2492,6 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                                 } else {
                                     logFile << "CRITICAL ERROR: Could not restore JSON from backup!" << std::endl;
                                 }
-                            }
-                        } else {
-                            logFile << "ERROR: Failed to write JSON safely!" << std::endl;
-                            logFile << "Attempting to restore from backup due to write failure..." << std::endl;
-                            if (fs::exists(backupJsonPath) &&
-                                RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
-                                logFile << "SUCCESS: JSON restored from backup after write failure!" << std::endl;
-                            } else {
-                                logFile << "CRITICAL ERROR: Could not restore JSON from backup!" << std::endl;
                             }
                         }
 
