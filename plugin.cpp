@@ -22,12 +22,9 @@
 
 namespace fs = std::filesystem;
 
-// ===== VERSION =====
-static constexpr const char* PLUGIN_VERSION = "2.4.1";
+static constexpr const char* PLUGIN_VERSION = "2.4.9";
 
-// ===== UBE RACES CONSTANT =====
 const std::vector<std::string> UBE_RACES = {
-    // Base races (11)
     "00UBE_HighElfRace",
     "00UBE_BretonRace",
     "00UBE_ImperialRace",
@@ -39,8 +36,6 @@ const std::vector<std::string> UBE_RACES = {
     "00UBE_ElderRace",
     "00UBE_KhajiitRace",
     "00UBE_ArgonianRace",
-    
-    // Vampire races (11)
     "00UBE_OrcRaceVampire",
     "00UBE_HighElfRaceVampire",
     "00UBE_BretonRaceVampire",
@@ -54,9 +49,7 @@ const std::vector<std::string> UBE_RACES = {
     "00UBE_ArgonianRaceVampire"
 };
 
-// ===== HIMBO RACES CONSTANT =====
 const std::vector<std::string> HIMBO_RACES = {
-    // Base races (11)
     "NordRace",
     "ImperialRace",
     "BretonRace",
@@ -68,8 +61,6 @@ const std::vector<std::string> HIMBO_RACES = {
     "KhajiitRace",
     "ArgonianRace",
     "ElderRace",
-    
-    // Vampire races (11)
     "NordRaceVampire",
     "ImperialRaceVampire",
     "BretonRaceVampire",
@@ -83,7 +74,6 @@ const std::vector<std::string> HIMBO_RACES = {
     "ElderRaceVampire"
 };
 
-// ===== EXCLUDED PRESETS FROM UBE RACES (BUT ALLOWED IN BLACKLIST) =====
 const std::vector<std::string> EXCLUDED_FROM_UBE_RACES = {
     "- Zeroed Sliders -",
     "-Zeroed Sliders-",
@@ -91,7 +81,6 @@ const std::vector<std::string> EXCLUDED_FROM_UBE_RACES = {
     "HIMBO Zero for OBody"
 };
 
-// ===== PROTECTED PRESETS FROM SMART CLEANING =====
 const std::vector<std::string> PROTECTED_FROM_CLEANING = {
     "- Zeroed Sliders -",
     "-Zeroed Sliders-",
@@ -102,20 +91,46 @@ const std::vector<std::string> PROTECTED_FROM_CLEANING = {
     "ElderRace"
 };
 
-// ===== SPECIAL BLACKLIST TYPES =====
 const std::vector<std::string> SPECIAL_BLACKLIST_TYPES = {
     "blacklistedNpcs",
     "blacklistedNpcsPluginFemale",
     "blacklistedNpcsPluginMale",
     "blacklistedRacesFemale",
     "blacklistedRacesMale",
-    "blacklistedOutfitsFromORefit",
-    "blacklistedOutfitsFromORefitPlugin",
-    "outfitsForceRefit",
     "blacklistedPresetsFromRandomDistribution"
 };
 
-// ===== INI RULE MODES CONSTANTS (UPDATED WITH NEW MODES) =====
+const std::vector<std::string> OUTFIT_ARRAY_TYPES = {
+    "blacklistedOutfitsFromORefit",
+    "blacklistedOutfitsFromORefitPlugin",
+    "outfitsForceRefit"
+};
+
+const std::vector<std::string> OUTFIT_FORMID_TYPES = {
+    "blacklistedOutfitsFromORefitFormID",
+    "outfitsForceRefitFormID"
+};
+
+const std::vector<std::string> NPC_FORMID_TYPES = {
+    "blacklistedNpcsFormID"
+};
+
+const std::vector<std::string> EXCEPTION_3BA_SET_NAMES = {
+    "CBBE 3BBB Body Amazing UBE Anus",
+    "CBBE 3BBB Body Amazing UBE Anus 150%",
+    "3BBB Collision Armor Amazing UBE Anus",
+    "SE 3BBB Body Amazing UBE Anus",
+    "SE 3BBB Body Amazing UBE Anus 150%"
+};
+
+const std::vector<std::string> UBE_SET_IDENTIFIERS = {
+    "UBE SE 2.0",
+    "UBE SE",
+    "UBE 2.0",
+    "UBE Vanilla",
+    "UBE BHUNP"
+};
+
 enum class INIRuleMode {
     STANDARD = -1,
     DISABLED = 0,
@@ -123,10 +138,8 @@ enum class INIRuleMode {
     REMOVE_ONCE = -2,
     REMOVE_ALWAYS = -3,
     EXCLUSIVE_ALWAYS = -4,
-    
     ORGANIZE_REMOVE_ONCE = -6,
     ORGANIZE_EXCLUSIVE_ONCE = -7,
-    
     KEYWORD = 8,
     KEYWORD_EXCLUSIVE = 9,
     KEYWORD_REMOVE = 10,
@@ -136,7 +149,6 @@ enum class INIRuleMode {
     KEYAUTHOR = 14,
     KEYAUTHOR_EXCLUSIVE = 15,
     KEYAUTHOR_REMOVE = 16,
-    
     KEYNORMAL = 17,
     KEYNORMAL_EXCLUSIVE = 18,
     KEYNORMAL_REMOVE = 19,
@@ -146,33 +158,26 @@ enum class INIRuleMode {
     KEYHIMBO = 23,
     KEYHIMBO_EXCLUSIVE = 24,
     KEYHIMBO_REMOVE = 25,
-    
     KEYWORD_ONCE = 26,
     KEYWORD_EXCLUSIVE_ONCE = 27,
     KEYWORD_REMOVE_ONCE = 28,
-    
     KEYWORDCHART_ONCE = 29,
     KEYWORDCHART_EXCLUSIVE_ONCE = 30,
     KEYWORDCHART_REMOVE_ONCE = 31,
-    
     KEYAUTHOR_ONCE = 32,
     KEYAUTHOR_EXCLUSIVE_ONCE = 33,
     KEYAUTHOR_REMOVE_ONCE = 34,
-    
     KEYNORMAL_ONCE = 35,
     KEYNORMAL_EXCLUSIVE_ONCE = 36,
     KEYNORMAL_REMOVE_ONCE = 37,
-    
     KEYUBE_ONCE = 38,
     KEYUBE_EXCLUSIVE_ONCE = 39,
     KEYUBE_REMOVE_ONCE = 40,
-    
     KEYHIMBO_ONCE = 41,
     KEYHIMBO_EXCLUSIVE_ONCE = 42,
     KEYHIMBO_REMOVE_ONCE = 43
 };
 
-// ===== C++17 COMPATIBLE STRING FUNCTIONS =====
 bool EndsWith(const std::string& str, const std::string& suffix) {
     if (suffix.size() > str.size()) return false;
     return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
@@ -182,8 +187,6 @@ bool StartsWith(const std::string& str, const std::string& prefix) {
     if (prefix.size() > str.size()) return false;
     return str.compare(0, prefix.size(), prefix) == 0;
 }
-
-// ===== IMPROVED MULTIIDIOMA SUPPORT FUNCTIONS =====
 
 std::string SafeWideStringToString(const std::wstring& wstr) {
     if (wstr.empty()) return std::string();
@@ -280,6 +283,7 @@ std::string GetEnvVar(const std::string& key) {
         free(buf);
         return value;
     }
+    if (buf) free(buf);
     return "";
 }
 
@@ -348,18 +352,20 @@ std::string GetGamePath() {
         std::string skyrimMods = GetEnvVar("SKYRIM_MODS_FOLDER");
         if (!skyrimMods.empty()) return skyrimMods;
 
-        std::vector<std::string> registryKeys = {"SOFTWARE\\WOW6432Node\\Bethesda Softworks\\Skyrim Special Edition",
-                                                 "SOFTWARE\\WOW6432Node\\GOG.com\\Games\\1457087920",
-                                                 "SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\489830",
-                                                 "SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\611670"};
+        std::vector<std::pair<std::string, std::string>> registryKeys = {
+            {"SOFTWARE\\WOW6432Node\\Bethesda Softworks\\Skyrim Special Edition", "Installed Path"},
+            {"SOFTWARE\\WOW6432Node\\GOG.com\\Games\\1457087920", "path"},
+            {"SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\489830", "InstallLocation"},
+            {"SOFTWARE\\WOW6432Node\\Valve\\Steam\\Apps\\611670", "InstallLocation"}
+        };
 
         HKEY hKey;
         char pathBuffer[MAX_PATH] = {0};
         DWORD pathSize = sizeof(pathBuffer);
 
-        for (const auto& key : registryKeys) {
+        for (const auto& [key, valueName] : registryKeys) {
             if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, key.c_str(), 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
-                if (RegQueryValueExA(hKey, "Installed Path", NULL, NULL, (LPBYTE)pathBuffer, &pathSize) ==
+                if (RegQueryValueExA(hKey, valueName.c_str(), NULL, NULL, (LPBYTE)pathBuffer, &pathSize) ==
                     ERROR_SUCCESS) {
                     RegCloseKey(hKey);
                     std::string result(pathBuffer);
@@ -367,6 +373,7 @@ std::string GetGamePath() {
                 }
                 RegCloseKey(hKey);
             }
+            pathSize = sizeof(pathBuffer);
         }
 
         std::vector<std::string> commonPaths = {
@@ -375,7 +382,10 @@ std::string GetGamePath() {
             "D:\\Steam\\steamapps\\common\\Skyrim Special Edition",
             "E:\\Steam\\steamapps\\common\\Skyrim Special Edition",
             "F:\\Steam\\steamapps\\common\\Skyrim Special Edition",
-            "G:\\Steam\\steamapps\\common\\Skyrim Special Edition"};
+            "G:\\Steam\\steamapps\\common\\Skyrim Special Edition",
+            "C:\\GOG Games\\Skyrim Special Edition",
+            "D:\\GOG Games\\Skyrim Special Edition"
+        };
 
         for (const auto& pathCandidate : commonPaths) {
             try {
@@ -514,8 +524,6 @@ std::string ReadFileWithEncoding(const fs::path& filepath) {
         return "";
     }
 }
-
-// ===== UTILITY FUNCTIONS =====
 
 std::string Trim(const std::string& str) {
     if (str.empty()) return str;
@@ -657,6 +665,56 @@ std::string NormalizePresetNameFlexible(const std::string& name) {
     return result.substr(start, end - start + 1);
 }
 
+std::string CleanFormID(const std::string& formID, std::ofstream& logFile, bool& wasCleaned) {
+    wasCleaned = false;
+    
+    if (formID.length() <= 6) {
+        return formID;
+    }
+    
+    std::string prefix = formID.substr(0, 2);
+    std::string upperPrefix = prefix;
+    std::transform(upperPrefix.begin(), upperPrefix.end(), upperPrefix.begin(), ::toupper);
+    
+    const std::set<std::string> validPrefixes = {
+        "00","01","02","03","04","05","06","07","08","09","0A","0B","0C","0D","0E","0F",
+        "10","11","12","13","14","15","16","17","18","19","1A","1B","1C","1D","1E","1F",
+        "20","21","22","23","24","25","26","27","28","29","2A","2B","2C","2D","2E","2F",
+        "30","31","32","33","34","35","36","37","38","39","3A","3B","3C","3D","3E","3F",
+        "40","41","42","43","44","45","46","47","48","49","4A","4B","4C","4D","4E","4F",
+        "50","51","52","53","54","55","56","57","58","59","5A","5B","5C","5D","5E","5F",
+        "60","61","62","63","64","65","66","67","68","69","6A","6B","6C","6D","6E","6F",
+        "70","71","72","73","74","75","76","77","78","79","7A","7B","7C","7D","7E","7F",
+        "80","81","82","83","84","85","86","87","88","89","8A","8B","8C","8D","8E","8F",
+        "90","91","92","93","94","95","96","97","98","99","9A","9B","9C","9D","9E","9F",
+        "A0","A1","A2","A3","A4","A5","A6","A7","A8","A9","AA","AB","AC","AD","AE","AF",
+        "B0","B1","B2","B3","B4","B5","B6","B7","B8","B9","BA","BB","BC","BD","BE","BF",
+        "C0","C1","C2","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC","CD","CE","CF",
+        "D0","D1","D2","D3","D4","D5","D6","D7","D8","D9","DA","DB","DC","DD","DE","DF",
+        "E0","E1","E2","E3","E4","E5","E6","E7","E8","E9","EA","EB","EC","ED","EE","EF",
+        "F0","F1","F2","F3","F4","F5","F6","F7","F8","F9","FA","FB","FC","FD",
+        "FE","FF"
+    };
+    
+    if (validPrefixes.find(upperPrefix) != validPrefixes.end()) {
+        return formID;
+    }
+    
+    if (upperPrefix == "XX") {
+        wasCleaned = true;
+        std::string cleaned = formID.substr(2);
+        logFile << "    FormID cleaned: " << formID << " -> " << cleaned 
+                << " (removed XX prefix)" << std::endl;
+        return cleaned;
+    }
+    
+    wasCleaned = true;
+    std::string cleaned = formID.substr(2);
+    logFile << "    FormID cleaned: " << formID << " -> " << cleaned 
+            << " (removed invalid prefix: " << prefix << ")" << std::endl;
+    return cleaned;
+}
+
 std::string DecodeHtmlEntities(const std::string& str) {
     std::string result = str;
     size_t pos = 0;
@@ -692,8 +750,6 @@ std::string DecodeHtmlEntities(const std::string& str) {
     
     return result;
 }
-
-// ===== IMPROVED COMMENT DETECTION (HTML-ENTITY AWARE) =====
 
 bool IsPartOfHtmlEntity(const std::string& str, size_t semicolonPos) {
     if (semicolonPos == 0 || semicolonPos >= str.length()) return false;
@@ -781,8 +837,6 @@ bool IsPluginName(const std::string& presetName) {
             lowerName.find(".esl") != std::string::npos);
 }
 
-// ===== SPECIAL RULE FUNCTIONS =====
-
 bool IsUBERace(const std::string& raceName) {
     return StartsWith(raceName, "00UBE_");
 }
@@ -797,9 +851,6 @@ std::string GetFullBlacklistKey(const std::string& shortType) {
     if (shortType == "NpcsPluginMale") return "blacklistedNpcsPluginMale";
     if (shortType == "RacesFemale") return "blacklistedRacesFemale";
     if (shortType == "RacesMale") return "blacklistedRacesMale";
-    if (shortType == "OutfitsFromORefit") return "blacklistedOutfitsFromORefit";
-    if (shortType == "OutfitsFromORefitPlugin") return "blacklistedOutfitsFromORefitPlugin";
-    if (shortType == "outfitsForceRefit") return "outfitsForceRefit";
     if (shortType == "PresetsFromRandomDistribution") return "blacklistedPresetsFromRandomDistribution";
     
     if (IsValidBlacklistType(shortType)) return shortType;
@@ -866,7 +917,6 @@ bool IsRemovalMode(INIRuleMode mode) {
            mode == INIRuleMode::KEYHIMBO_REMOVE_ONCE;
 }
 
-// ===== NEW PRIORITY SYSTEM FOR RULE ORDERING =====
 struct RuleWithPriority {
     std::string key;
     std::string plugin;
@@ -902,8 +952,6 @@ int GetRulePriority(INIRuleMode mode) {
     
     return 1;
 }
-
-// ===== IMPROVED XML PRESET EXTRACTION =====
 
 struct XmlPresetInfo {
     std::string internalName;
@@ -998,6 +1046,48 @@ struct OrderedPluginData {
     }
 };
 
+struct NpcFormIDData {
+    std::map<std::string, std::map<std::string, std::vector<std::string>>> data;
+    
+    void addPresetToFormID(const std::string& plugin, const std::string& formID, const std::string& preset) {
+        data[plugin][formID].push_back(preset);
+    }
+    
+    void removePresetFromFormID(const std::string& plugin, const std::string& formID, const std::string& preset) {
+        auto pluginIt = data.find(plugin);
+        if (pluginIt != data.end()) {
+            auto formIDIt = pluginIt->second.find(formID);
+            if (formIDIt != pluginIt->second.end()) {
+                auto& presets = formIDIt->second;
+                auto presetIt = std::find(presets.begin(), presets.end(), preset);
+                if (presetIt != presets.end()) {
+                    presets.erase(presetIt);
+                    if (presets.empty()) {
+                        pluginIt->second.erase(formIDIt);
+                        if (pluginIt->second.empty()) {
+                            data.erase(pluginIt);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    bool isEmpty() const {
+        return data.empty();
+    }
+    
+    size_t getTotalPresetCount() const {
+        size_t count = 0;
+        for (const auto& [plugin, formIDs] : data) {
+            for (const auto& [formID, presets] : formIDs) {
+                count += presets.size();
+            }
+        }
+        return count;
+    }
+};
+
 struct ConfigSettings {
     int backupValue = 1;
     bool modeUBE = true;
@@ -1014,6 +1104,10 @@ struct XmlAnalysisResult {
     bool hasHIMBO = false;
     bool hasConflictingGroups = false;
     std::vector<std::string> conflictingGroupsFound;
+    std::string setAttributeValue = "";
+    bool setAnalysisPerformed = false;
+    bool isException3BA = false;
+    bool isUBEBySet = false;
 };
 
 struct UBEPresetInfo {
@@ -1044,8 +1138,6 @@ struct PresetMapData {
     std::set<std::string> ubePresetNames;
     std::set<std::string> himboPresetNames;
 };
-
-// ===== NEW CONFLICT TRACKING STRUCTURES WITH FILE MODIFICATION TIME =====
 
 struct ConflictRuleInfo {
     std::string filename;
@@ -1101,7 +1193,199 @@ struct ConflictResolution {
     std::map<std::string, ConflictRuleInfo> dominantRules;
 };
 
-// ===== NEW MULTI-PRESET EXTRACTION FUNCTION =====
+struct NpcFormIDRule {
+    std::string plugin;
+    std::string formID;
+    std::vector<std::string> presets;
+    std::string extra;
+    int applyCount = -1;
+    INIRuleMode mode = INIRuleMode::STANDARD;
+};
+
+bool FindFileWithFallback(const fs::path& basePath, const std::string& filename, 
+                          fs::path& foundPath, std::ofstream& logFile) {
+    try {
+        fs::path normalPath = basePath / filename;
+        
+        if (fs::exists(normalPath)) {
+            foundPath = normalPath;
+            return true;
+        }
+        
+        std::string basePathStr = basePath.string();
+        
+        if (!basePathStr.empty() && basePathStr.back() != '\\') {
+            basePathStr += '\\';
+        }
+        
+        basePathStr += '\\';
+        
+        basePathStr += filename;
+        
+        fs::path doubleBackslashPath(basePathStr);
+        
+        try {
+            doubleBackslashPath = fs::canonical(doubleBackslashPath);
+            
+            if (fs::exists(doubleBackslashPath)) {
+                foundPath = doubleBackslashPath;
+                return true;
+            }
+        } catch (...) {
+        }
+
+        if (fs::exists(basePath) && fs::is_directory(basePath)) {
+            std::string lowerFilename = filename;
+            std::transform(lowerFilename.begin(), lowerFilename.end(), 
+                         lowerFilename.begin(), ::tolower);
+            
+            for (const auto& entry : fs::directory_iterator(basePath)) {
+                try {
+                    std::string entryFilename = entry.path().filename().string();
+                    
+                    std::string lowerEntryFilename = entryFilename;
+                    std::transform(lowerEntryFilename.begin(), lowerEntryFilename.end(), 
+                                 lowerEntryFilename.begin(), ::tolower);
+                    
+                    if (lowerEntryFilename == lowerFilename) {
+                        foundPath = entry.path();
+                        return true;
+                    }
+                } catch (...) {
+                    continue;
+                }
+            }
+        }
+        
+        return false;
+        
+    } catch (const std::exception& e) {
+        return false;
+    } catch (...) {
+        return false;
+    }
+}
+
+fs::path BuildPathCaseInsensitive(const fs::path& basePath, 
+                                  const std::vector<std::string>& components, 
+                                  std::ofstream& logFile) {
+    try {
+        fs::path currentPath = basePath;
+        
+        for (const auto& component : components) {
+            fs::path testPath = currentPath / component;
+            
+            if (fs::exists(testPath)) {
+                currentPath = testPath;
+                continue;
+            }
+            
+            std::string lowerComponent = component;
+            std::transform(lowerComponent.begin(), lowerComponent.end(), 
+                         lowerComponent.begin(), ::tolower);
+            
+            testPath = currentPath / lowerComponent;
+            
+            if (fs::exists(testPath)) {
+                currentPath = testPath;
+                continue;
+            }
+            
+            std::string upperComponent = component;
+            std::transform(upperComponent.begin(), upperComponent.end(), 
+                         upperComponent.begin(), ::toupper);
+            
+            testPath = currentPath / upperComponent;
+            
+            if (fs::exists(testPath)) {
+                currentPath = testPath;
+                continue;
+            }
+            
+            bool found = false;
+            
+            if (fs::exists(currentPath) && fs::is_directory(currentPath)) {
+                for (const auto& entry : fs::directory_iterator(currentPath)) {
+                    try {
+                        std::string entryName = entry.path().filename().string();
+                        std::string lowerEntryName = entryName;
+                        std::transform(lowerEntryName.begin(), lowerEntryName.end(), 
+                                     lowerEntryName.begin(), ::tolower);
+                        
+                        if (lowerEntryName == lowerComponent) {
+                            currentPath = entry.path();
+                            found = true;
+                            break;
+                        }
+                    } catch (...) {
+                        continue;
+                    }
+                }
+            }
+            
+            if (!found) {
+                currentPath = currentPath / component;
+            }
+        }
+        
+        return currentPath;
+        
+    } catch (const std::exception& e) {
+        return basePath;
+    } catch (...) {
+        return basePath;
+    }
+}
+
+bool IsValidPluginPath(const fs::path& pluginPath, std::ofstream& logFile) {
+    const std::vector<std::string> dllNames = {
+        "Act1_OBody_NG_PDA_NG.dll",
+        "OBody_NG_PDA_NG.dll",
+        "OBody_PDA.dll"
+    };
+    
+    for (const auto& dllName : dllNames) {
+        fs::path foundPath;
+        
+        if (FindFileWithFallback(pluginPath, dllName, foundPath, logFile)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+fs::path GetDllDirectory(std::ofstream& logFile) {
+    try {
+        HMODULE hModule = nullptr;
+
+        static int dummyVariable = 0;
+
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               reinterpret_cast<LPCSTR>(&dummyVariable), &hModule) &&
+            hModule != nullptr) {
+            wchar_t dllPath[MAX_PATH] = {0};
+            DWORD size = GetModuleFileNameW(hModule, dllPath, MAX_PATH);
+
+            if (size > 0) {
+                std::wstring wsDllPath(dllPath);
+                std::string dllPathStr = SafeWideStringToString(wsDllPath);
+
+                if (!dllPathStr.empty()) {
+                    fs::path dllDir = fs::path(dllPathStr).parent_path();
+                    return dllDir;
+                }
+            }
+        }
+
+        return fs::path();
+
+    } catch (const std::exception& e) {
+        return fs::path();
+    } catch (...) {
+        return fs::path();
+    }
+}
 
 std::vector<XmlPresetInfo> ExtractAllPresetsFromXml(const fs::path& xmlPath, std::ofstream& logFile) {
     std::vector<XmlPresetInfo> allPresets;
@@ -1116,7 +1400,7 @@ std::vector<XmlPresetInfo> ExtractAllPresetsFromXml(const fs::path& xmlPath, std
                 filename = std::string(u8name.begin(), u8name.end());
             } catch (...) {
                 filename = "unknown";
-                logFile << "  [ERROR] Could not read filename from path" << std::endl;
+                logFile << "  ERROR: Could not read filename from path" << std::endl;
                 return allPresets;
             }
         }
@@ -1334,6 +1618,135 @@ XmlAnalysisResult AnalyzeXmlGroups(const fs::path& xmlPath, std::ofstream& logFi
             pos = nameEnd + 1;
         }
         
+        bool needsSetAnalysis = (!result.hasUBE && !result.hasHIMBO) || 
+                                 result.hasConflictingGroups ||
+                                 (result.hasUBE && result.hasHIMBO);
+        
+        if (needsSetAnalysis) {
+            size_t presetPos = lowerContent.find("<preset");
+            if (presetPos != std::string::npos) {
+                size_t setPos = lowerContent.find("set=", presetPos);
+                
+                size_t presetEnd = lowerContent.find(">", presetPos);
+                
+                if (setPos != std::string::npos && setPos < presetEnd) {
+                    size_t quoteStart = setPos + 4;
+                    
+                    while (quoteStart < lowerContent.length() && 
+                           (lowerContent[quoteStart] == ' ' || lowerContent[quoteStart] == '\t')) {
+                        quoteStart++;
+                    }
+                    
+                    if (quoteStart < lowerContent.length()) {
+                        char setQuoteChar = content[quoteStart];
+                        if (setQuoteChar == '"' || setQuoteChar == '\'') {
+                            size_t setValueStart = quoteStart + 1;
+                            size_t setValueEnd = content.find(setQuoteChar, setValueStart);
+                            
+                            if (setValueEnd != std::string::npos) {
+                                result.setAttributeValue = content.substr(setValueStart, setValueEnd - setValueStart);
+                                result.setAnalysisPerformed = true;
+                                
+                                std::string lowerSetValue = result.setAttributeValue;
+                                std::transform(lowerSetValue.begin(), lowerSetValue.end(), 
+                                             lowerSetValue.begin(), ::tolower);
+                                
+                                logFile << "  Set analysis: Found set=\"" << result.setAttributeValue << "\"" << std::endl;
+                                
+                                for (const auto& exceptionName : EXCEPTION_3BA_SET_NAMES) {
+                                    if (result.setAttributeValue == exceptionName) {
+                                        result.isException3BA = true;
+                                        logFile << "  Exception 3BA: Detected exact match: \"" << exceptionName << "\"" << std::endl;
+                                        logFile << "  Exception 3BA: Will be categorized as Normal 3BA, NOT UBE" << std::endl;
+                                        break;
+                                    }
+                                }
+                                
+                                for (const auto& ubeId : UBE_SET_IDENTIFIERS) {
+                                    if (result.setAttributeValue.find(ubeId) != std::string::npos) {
+                                        result.isUBEBySet = true;
+                                        logFile << "  UBE by set: Detected identifier: \"" << ubeId << "\"" << std::endl;
+                                        break;
+                                    }
+                                }
+                                
+                                if (lowerSetValue.find("ube") != std::string::npos && !result.isException3BA) {
+                                    result.hasUBE = true;
+                                    logFile << "  Set analysis: Detected UBE from set attribute" << std::endl;
+                                }
+                                
+                                if (lowerSetValue.find("himbo") != std::string::npos) {
+                                    result.hasHIMBO = true;
+                                    logFile << "  Set analysis: Detected HIMBO from set attribute" << std::endl;
+                                }
+                                
+                                bool hasConflictInSet = false;
+                                for (const auto& pattern : conflictingPatterns) {
+                                    if (lowerSetValue.find(pattern) != std::string::npos) {
+                                        hasConflictInSet = true;
+                                        if (std::find(result.conflictingGroupsFound.begin(), 
+                                                     result.conflictingGroupsFound.end(), 
+                                                     pattern) == result.conflictingGroupsFound.end()) {
+                                            result.conflictingGroupsFound.push_back(pattern);
+                                        }
+                                    }
+                                }
+                                
+                                if (hasConflictInSet) {
+                                    result.hasConflictingGroups = true;
+                                    logFile << "  Set analysis: Detected conflicting body types from set attribute" << std::endl;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (!result.hasUBE && !result.hasHIMBO && !result.hasConflictingGroups) {
+            std::string filename;
+            try {
+                filename = xmlPath.stem().string();
+            } catch (...) {
+                try {
+                    auto u8name = xmlPath.stem().u8string();
+                    filename = std::string(u8name.begin(), u8name.end());
+                } catch (...) {
+                    filename = "";
+                }
+            }
+            
+            if (!filename.empty()) {
+                std::string lowerFilename = filename;
+                std::transform(lowerFilename.begin(), lowerFilename.end(), 
+                             lowerFilename.begin(), ::tolower);
+                
+                logFile << "  Filename fallback: Analyzing filename: " << filename << std::endl;
+                
+                if (lowerFilename.find("ube") != std::string::npos) {
+                    result.hasUBE = true;
+                    logFile << "  Filename fallback: Detected UBE from filename" << std::endl;
+                }
+                
+                if (lowerFilename.find("himbo") != std::string::npos) {
+                    result.hasHIMBO = true;
+                    logFile << "  Filename fallback: Detected HIMBO from filename" << std::endl;
+                }
+                
+                for (const auto& pattern : conflictingPatterns) {
+                    if (lowerFilename.find(pattern) != std::string::npos) {
+                        result.hasConflictingGroups = true;
+                        if (std::find(result.conflictingGroupsFound.begin(), 
+                                     result.conflictingGroupsFound.end(), 
+                                     pattern) == result.conflictingGroupsFound.end()) {
+                            result.conflictingGroupsFound.push_back(pattern);
+                        }
+                        logFile << "  Filename fallback: Detected conflicting pattern: " << pattern << std::endl;
+                    }
+                }
+            }
+        }
+        
         return result;
         
     } catch (...) {
@@ -1341,8 +1754,6 @@ XmlAnalysisResult AnalyzeXmlGroups(const fs::path& xmlPath, std::ofstream& logFi
         return result;
     }
 }
-
-// ===== NEW FILTERING FUNCTIONS FOR INI MODES =====
 
 std::string ExtractTextInParentheses(const std::string& text) {
     std::string result;
@@ -1506,7 +1917,55 @@ std::vector<std::string> FindMatchingPresetsByFamily(const PresetMapData& preset
     return matchingPresets;
 }
 
-// ===== SPECIAL RULE PARSING FUNCTIONS =====
+NpcFormIDRule ParseNpcFormIDRuleLine(const std::string& value, std::ofstream& logFile) {
+    NpcFormIDRule rule;
+    
+    std::vector<std::string> parts = Split(value, '|');
+    if (parts.size() >= 2) {
+        rule.plugin = Trim(parts[0]);
+        
+        std::vector<std::string> formIDAndPresets = Split(parts[1], ',');
+        
+        if (!formIDAndPresets.empty()) {
+            std::string rawFormID = Trim(formIDAndPresets[0]);
+            bool wasCleaned = false;
+            rule.formID = CleanFormID(rawFormID, logFile, wasCleaned);
+            
+            for (size_t i = 1; i < formIDAndPresets.size(); i++) {
+                rule.presets.push_back(Trim(formIDAndPresets[i]));
+            }
+        }
+        
+        if (parts.size() >= 3) {
+            rule.extra = Trim(parts[2]);
+            
+            if (rule.extra.empty()) {
+                rule.mode = INIRuleMode::STANDARD;
+                rule.applyCount = -1;
+            } else if (rule.extra == "-") {
+                rule.mode = INIRuleMode::REMOVE_ALWAYS;
+                rule.applyCount = -1;
+            } else if (rule.extra == "*") {
+                rule.mode = INIRuleMode::EXCLUSIVE_ALWAYS;
+                rule.applyCount = -1;
+            } else {
+                try {
+                    rule.applyCount = std::stoi(rule.extra);
+                    if (rule.applyCount == 1) {
+                        rule.mode = INIRuleMode::ONCE;
+                    } else if (rule.applyCount == 0) {
+                        rule.mode = INIRuleMode::DISABLED;
+                    }
+                } catch (...) {
+                    rule.mode = INIRuleMode::DISABLED;
+                    rule.applyCount = 0;
+                }
+            }
+        }
+    }
+    
+    return rule;
+}
 
 SpecialRule ParseSpecialRuleLine(const std::string& key, const std::string& value) {
     SpecialRule rule;
@@ -1650,6 +2109,110 @@ SpecialRule ParseSpecialRuleLine(const std::string& key, const std::string& valu
         rule.targetKey = GetFullBlacklistKey(shortType);
     }
 
+    return rule;
+}
+
+SpecialRule ParseFormIDRuleLine(const std::string& key, const std::string& value, std::ofstream& logFile) {
+    SpecialRule rule;
+    rule.ruleType = key;
+    rule.targetKey = key;
+    
+    std::vector<std::string> parts = Split(value, '|');
+    if (parts.size() >= 2) {
+        rule.plugin = Trim(parts[0]);
+        
+        std::vector<std::string> rawFormIDs = Split(parts[1], ',');
+        for (const auto& rawID : rawFormIDs) {
+            bool wasCleaned = false;
+            std::string cleanedID = CleanFormID(Trim(rawID), logFile, wasCleaned);
+            rule.presets.push_back(cleanedID);
+        }
+        
+        if (parts.size() >= 3) {
+            rule.extra = Trim(parts[2]);
+            
+            if (rule.extra.empty()) {
+                rule.mode = INIRuleMode::STANDARD;
+                rule.applyCount = -1;
+            } else if (rule.extra == "-") {
+                rule.mode = INIRuleMode::REMOVE_ALWAYS;
+                rule.applyCount = -1;
+            } else if (rule.extra == "*") {
+                rule.mode = INIRuleMode::EXCLUSIVE_ALWAYS;
+                rule.applyCount = -1;
+            } else {
+                try {
+                    rule.applyCount = std::stoi(rule.extra);
+                    if (rule.applyCount == 1) {
+                        rule.mode = INIRuleMode::ONCE;
+                    } else if (rule.applyCount == 0) {
+                        rule.mode = INIRuleMode::DISABLED;
+                    } else {
+                        rule.mode = INIRuleMode::DISABLED;
+                        rule.applyCount = 0;
+                    }
+                } catch (...) {
+                    rule.mode = INIRuleMode::DISABLED;
+                    rule.applyCount = 0;
+                }
+            }
+        } else {
+            rule.mode = INIRuleMode::STANDARD;
+            rule.applyCount = -1;
+        }
+    }
+    
+    return rule;
+}
+
+SpecialRule ParseOutfitRuleLine(const std::string& key, const std::string& value) {
+    SpecialRule rule;
+    rule.ruleType = "outfits";
+    
+    std::vector<std::string> parts = Split(value, '|');
+    if (parts.size() >= 2) {
+        std::string targetSection = Trim(parts[0]);
+        
+        if (std::find(OUTFIT_ARRAY_TYPES.begin(), OUTFIT_ARRAY_TYPES.end(), targetSection) != OUTFIT_ARRAY_TYPES.end()) {
+            rule.targetKey = targetSection;
+            rule.plugin = "";
+            rule.presets = Split(parts[1], ',');
+            
+            if (parts.size() >= 3) {
+                rule.extra = Trim(parts[2]);
+                
+                if (rule.extra.empty()) {
+                    rule.mode = INIRuleMode::STANDARD;
+                    rule.applyCount = -1;
+                } else if (rule.extra == "-") {
+                    rule.mode = INIRuleMode::REMOVE_ALWAYS;
+                    rule.applyCount = -1;
+                } else if (rule.extra == "*") {
+                    rule.mode = INIRuleMode::EXCLUSIVE_ALWAYS;
+                    rule.applyCount = -1;
+                } else {
+                    try {
+                        rule.applyCount = std::stoi(rule.extra);
+                        if (rule.applyCount == 1) {
+                            rule.mode = INIRuleMode::ONCE;
+                        } else if (rule.applyCount == 0) {
+                            rule.mode = INIRuleMode::DISABLED;
+                        } else {
+                            rule.mode = INIRuleMode::DISABLED;
+                            rule.applyCount = 0;
+                        }
+                    } catch (...) {
+                        rule.mode = INIRuleMode::DISABLED;
+                        rule.applyCount = 0;
+                    }
+                }
+            } else {
+                rule.mode = INIRuleMode::STANDARD;
+                rule.applyCount = -1;
+            }
+        }
+    }
+    
     return rule;
 }
 
@@ -2156,8 +2719,6 @@ void UpdateBackupConfigInIni(const fs::path& iniPath, std::ofstream& logFile, in
     }
 }
 
-// ===== NEW CONFLICT RESOLUTION SYSTEM =====
-
 void UpdateIniRuleCount(const fs::path& iniPath, const std::string& originalLine, int newCount) {
     try {
         std::string content = ReadFileWithEncoding(iniPath);
@@ -2326,7 +2887,7 @@ void GenerateConflictReport(const RuleConflictTracker& conflictTracker,
     if (hasConflicts) {
         iniLog << std::endl;
         iniLog << "====================================================" << std::endl;
-        iniLog << "PRIORITY CONFLICT * OBODY PDA REPORT" << std::endl;
+        iniLog << "PRIORITY CONFLICT OBODY PDA REPORT" << std::endl;
         iniLog << "====================================================" << std::endl;
         iniLog << std::endl;
         
@@ -2441,8 +3002,6 @@ void GenerateConflictReport(const RuleConflictTracker& conflictTracker,
     }
 }
 
-// ===== UBE/HIMBO XML PROCESSING FUNCTIONS =====
-
 std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPresets(
     const fs::path& bodySlidePresetsPath, std::ofstream& logFile) {
     
@@ -2457,7 +3016,7 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
         }
         
         logFile << std::endl;
-        logFile << "Scanning for UBE XML presets (with multi-preset support)..." << std::endl;
+        logFile << "Scanning for UBE XML presets (with multi-preset support and exception handling)..." << std::endl;
         logFile << "----------------------------------------------------" << std::endl;
         
         int totalXmlScanned = 0;
@@ -2465,6 +3024,8 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
         int totalConflicting = 0;
         int conflictingButNameHasUBE = 0;
         int multiPresetFilesProcessed = 0;
+        int exception3BAFilesSkipped = 0;
+        int resolvedBySetAttribute = 0;
         
         for (const auto& entry : fs::directory_iterator(bodySlidePresetsPath)) {
             try {
@@ -2477,6 +3038,7 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
                         try {
                             filename = entry.path().filename().string();
                         } catch (...) {
+                            logFile << "  [ERROR] Could not read filename for entry" << std::endl;
                             continue;
                         }
                     }
@@ -2487,6 +3049,14 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
                         try {
                             XmlAnalysisResult analysis = AnalyzeXmlGroups(entry.path(), logFile);
                             
+                            if (analysis.isException3BA) {
+                                exception3BAFilesSkipped++;
+                                logFile << "  [SKIP - 3BA EXCEPTION] " << filename << std::endl;
+                                logFile << "    Detected 3BA exception set name (one of 5 variants)" << std::endl;
+                                logFile << "    This preset is 3BA/CBBE, NOT UBE - skipping UBE categorization" << std::endl;
+                                continue;
+                            }
+                            
                             if (analysis.hasUBE) {
                                 std::vector<XmlPresetInfo> allPresetsInFile = ExtractAllPresetsFromXml(entry.path(), logFile);
                                 
@@ -2495,10 +3065,23 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
                                     continue;
                                 }
                                 
+                                std::string detectionSource = "Groups";
+                                if (analysis.setAnalysisPerformed && !analysis.setAttributeValue.empty()) {
+                                    detectionSource = "Set attribute";
+                                } else if (!analysis.setAnalysisPerformed) {
+                                    detectionSource = "Filename";
+                                }
+                                
                                 if (allPresetsInFile.size() > 1) {
                                     multiPresetFilesProcessed++;
-                                    logFile << "  [UBE MULTI-PRESET] " << filename << " contains " 
-                                            << allPresetsInFile.size() << " UBE presets" << std::endl;
+                                    logFile << "  [UBE MULTI-PRESET via " << detectionSource << "] " << filename 
+                                            << " contains " << allPresetsInFile.size() << " UBE presets" << std::endl;
+                                } else {
+                                    logFile << "  [UBE DETECTED via " << detectionSource << "] " << filename << std::endl;
+                                }
+                                
+                                if (!analysis.setAttributeValue.empty()) {
+                                    logFile << "    Set value: \"" << analysis.setAttributeValue << "\"" << std::endl;
                                 }
                                 
                                 for (const auto& presetInfo : allPresetsInFile) {
@@ -2512,30 +3095,49 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
                                     std::string lowerPresetName = presetName;
                                     std::transform(lowerPresetName.begin(), lowerPresetName.end(), 
                                                  lowerPresetName.begin(), ::tolower);
-                                    bool filenameContainsUBE = (lowerPresetName.find("ube") != std::string::npos);
+                                    bool presetNameContainsUBE = (lowerPresetName.find("ube") != std::string::npos);
                                     
                                     if (analysis.hasConflictingGroups) {
                                         totalConflicting++;
+                                        
+                                        bool shouldBeUBE = false;
+                                        std::string resolutionReason = "";
+                                        
+                                        if (analysis.isUBEBySet) {
+                                            shouldBeUBE = true;
+                                            resolutionReason = "UBE identifier in set attribute";
+                                            resolvedBySetAttribute++;
+                                        }
+                                        else if (presetNameContainsUBE) {
+                                            shouldBeUBE = true;
+                                            resolutionReason = "preset name contains 'UBE'";
+                                        }
+                                        else {
+                                            shouldBeUBE = false;
+                                            resolutionReason = "no clear UBE indicator (excluded from UBE races)";
+                                        }
                                         
                                         UBEPresetInfo info;
                                         info.presetName = presetName;
                                         info.hasConflict = true;
                                         info.conflictingGroups = analysis.conflictingGroupsFound;
-                                        info.allowedInRaces = filenameContainsUBE;
+                                        info.allowedInRaces = shouldBeUBE;
                                         
                                         allUBEPresetsForBlacklist.push_back(presetName);
                                         
-                                        if (filenameContainsUBE) {
+                                        if (shouldBeUBE) {
                                             ubePresetsInfo.push_back(info);
                                             conflictingButNameHasUBE++;
-                                            logFile << "    CONFLICT (preset has UBE in name, added to races): " 
+                                            logFile << "    CONFLICT RESOLVED (added to UBE races): " 
                                                     << presetName << std::endl;
+                                            logFile << "      Reason: " << resolutionReason << std::endl;
                                         } else {
                                             if (std::find(excludedFromRacesXmlFiles.begin(), excludedFromRacesXmlFiles.end(), 
                                                          filename) == excludedFromRacesXmlFiles.end()) {
                                                 excludedFromRacesXmlFiles.push_back(filename);
                                             }
-                                            logFile << "    CONFLICT (excluded from races): " << presetName << std::endl;
+                                            logFile << "    CONFLICT (excluded from UBE races): " << presetName << std::endl;
+                                            logFile << "      Reason: " << resolutionReason << std::endl;
                                         }
                                         
                                         logFile << "      Has UBE group but also contains: ";
@@ -2579,10 +3181,12 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
         logFile << std::endl;
         logFile << "UBE XML Scan Summary:" << std::endl;
         logFile << "  Total XML files scanned: " << totalXmlScanned << std::endl;
+        logFile << "  3BA exception files skipped: " << exception3BAFilesSkipped << std::endl;
         logFile << "  Multi-preset UBE files found: " << multiPresetFilesProcessed << std::endl;
         logFile << "  Valid UBE presets found: " << totalUbeFound << std::endl;
         logFile << "  Conflicting presets (UBE + 3BA/3BBB/CBBE): " << totalConflicting << std::endl;
-        logFile << "  Conflicting but preset name has UBE (added to races): " << conflictingButNameHasUBE << std::endl;
+        logFile << "  Conflicts resolved by set attribute: " << resolvedBySetAttribute << std::endl;
+        logFile << "  Conflicts resolved by preset name: " << (conflictingButNameHasUBE - resolvedBySetAttribute) << std::endl;
         logFile << "  Total presets for blacklist: " << allUBEPresetsForBlacklist.size() << std::endl;
         logFile << "  Total presets for UBE races: " << ubePresetsInfo.size() << std::endl;
         
@@ -2590,9 +3194,20 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
             logFile << std::endl;
             logFile << "WARNING: The following presets have both UBE and 3BA/3BBB/CBBE indicators:" << std::endl;
             logFile << "All conflicting presets were added to blacklist." << std::endl;
-            logFile << "Presets with 'UBE' in name were also added to UBE races." << std::endl;
-            logFile << "Presets without 'UBE' in name were excluded from UBE races." << std::endl;
+            logFile << "Resolution priority: 1) Set attribute with UBE identifier, 2) Preset name contains 'UBE'" << std::endl;
+            logFile << "Presets without clear UBE indicators were excluded from UBE races." << std::endl;
             logFile << "You can manually add excluded presets via INI rules if needed." << std::endl;
+            logFile << std::endl;
+        }
+        
+        if (exception3BAFilesSkipped > 0) {
+            logFile << std::endl;
+            logFile << "3BA EXCEPTION FILES DETECTED AND SKIPPED:" << std::endl;
+            logFile << "----------------------------------------------------" << std::endl;
+            logFile << exception3BAFilesSkipped << " file(s) with 3BA exception set names (5 variants)" << std::endl;
+            logFile << "(CBBE/SE 3BBB Body Amazing UBE Anus variants)" << std::endl;
+            logFile << "were detected and correctly skipped from UBE categorization." << std::endl;
+            logFile << "These are 3BA/CBBE presets and will be available for normal (non-UBE) usage." << std::endl;
             logFile << std::endl;
         }
         
@@ -2601,7 +3216,7 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
             logFile << "XML FILES EXCLUDED FROM UBE RACES:" << std::endl;
             logFile << "----------------------------------------------------" << std::endl;
             logFile << "The following XML files contain UBE groups but were excluded from UBE races" << std::endl;
-            logFile << "because they also contain 3BA/3BBB/CBBE groups and don't have 'UBE' in the preset name." << std::endl;
+            logFile << "because they also contain 3BA/3BBB/CBBE groups and lack clear UBE indicators." << std::endl;
             logFile << "Please review these files to determine if they are intended for UBE." << std::endl;
             logFile << std::endl;
             
@@ -2611,9 +3226,10 @@ std::pair<std::vector<std::string>, std::vector<UBEPresetInfo>> ProcessUBEXmlPre
             
             logFile << std::endl;
             logFile << "If any of these presets should be included in UBE races, you can:" << std::endl;
-            logFile << "  1. Rename the preset name inside XML to include 'UBE'" << std::endl;
-            logFile << "  2. Manually add them using INI rules in OBodyNG_PDA_*.ini files" << std::endl;
-            logFile << "  3. Contact the preset author to clarify the intended body type" << std::endl;
+            logFile << "  1. Add a UBE identifier to the set attribute (e.g., 'UBE SE 2.0')" << std::endl;
+            logFile << "  2. Rename the preset name inside XML to include 'UBE'" << std::endl;
+            logFile << "  3. Manually add them using INI rules in OBodyNG_PDA_*.ini files" << std::endl;
+            logFile << "  4. Contact the preset author to clarify the intended body type" << std::endl;
             logFile << std::endl;
         }
         
@@ -2680,10 +3296,23 @@ std::pair<std::vector<std::string>, std::vector<HIMBOPresetInfo>> ProcessHIMBOXm
                                     continue;
                                 }
                                 
+                                std::string detectionSource = "Groups";
+                                if (analysis.setAnalysisPerformed && !analysis.setAttributeValue.empty()) {
+                                    detectionSource = "Set attribute";
+                                } else if (!analysis.setAnalysisPerformed) {
+                                    detectionSource = "Filename";
+                                }
+                                
                                 if (allPresetsInFile.size() > 1) {
                                     multiPresetFilesProcessed++;
-                                    logFile << "  [HIMBO MULTI-PRESET] " << filename << " contains " 
-                                            << allPresetsInFile.size() << " HIMBO presets" << std::endl;
+                                    logFile << "  [HIMBO MULTI-PRESET via " << detectionSource << "] " << filename 
+                                            << " contains " << allPresetsInFile.size() << " HIMBO presets" << std::endl;
+                                } else {
+                                    logFile << "  [HIMBO DETECTED via " << detectionSource << "] " << filename << std::endl;
+                                }
+                                
+                                if (!analysis.setAttributeValue.empty()) {
+                                    logFile << "    Set value: \"" << analysis.setAttributeValue << "\"" << std::endl;
                                 }
                                 
                                 for (const auto& presetInfo : allPresetsInFile) {
@@ -3010,7 +3639,371 @@ bool ApplyHIMBOPresetsToJson(std::map<std::string, OrderedPluginData>& processed
     }
 }
 
-// ===== JSON VALIDATION FUNCTIONS =====
+bool ApplySpecialRules(std::map<std::string, OrderedPluginData>& processedData,
+                      const std::vector<SpecialRule>& specialRules,
+                      const PresetMapData& masterPresetMap,
+                      std::ofstream& logFile) {
+    
+    if (specialRules.empty()) {
+        return false;
+    }
+    
+    try {
+        logFile << std::endl;
+        logFile << "PHASE 3.5: Processing Special Rules (UBE races, Any races, Blacklists, Outfits)..." << std::endl;
+        logFile << "----------------------------------------------------" << std::endl;
+        
+        int totalSpecialRulesProcessed = 0;
+        int totalSpecialRulesApplied = 0;
+        int totalSpecialRulesSkipped = 0;
+        int totalSpecialPresetsAdded = 0;
+        int totalSpecialPresetsRemoved = 0;
+        
+        for (const auto& rule : specialRules) {
+            totalSpecialRulesProcessed++;
+            
+            if (rule.targetKey.empty()) {
+                logFile << "  Skipped special rule (invalid target key): " << rule.ruleType << std::endl;
+                totalSpecialRulesSkipped++;
+                continue;
+            }
+            
+            bool shouldApply = false;
+            
+            if (std::find(NPC_FORMID_TYPES.begin(), NPC_FORMID_TYPES.end(), rule.targetKey) != NPC_FORMID_TYPES.end()) {
+                shouldApply = true;
+                
+                if (rule.applyCount == 0 || rule.mode == INIRuleMode::DISABLED) {
+                    totalSpecialRulesSkipped++;
+                    logFile << "  SKIPPED (disabled): " << rule.targetKey << " -> " << rule.plugin << std::endl;
+                    continue;
+                }
+                
+                auto& data = processedData[rule.targetKey];
+                
+                if (rule.mode == INIRuleMode::EXCLUSIVE_ALWAYS) {
+                    if (data.hasPlugin(rule.plugin)) {
+                        data.removePlugin(rule.plugin);
+                    }
+                    for (const auto& formID : rule.presets) {
+                        data.addPreset(rule.plugin, formID);
+                        totalSpecialPresetsAdded++;
+                    }
+                    logFile << "  Applied FormID NPC exclusive: " << rule.targetKey 
+                            << " -> " << rule.plugin 
+                            << " -> Replaced with " << rule.presets.size() << " FormIDs" << std::endl;
+                    totalSpecialRulesApplied++;
+                    
+                } else if (rule.mode == INIRuleMode::REMOVE_ALWAYS || rule.mode == INIRuleMode::REMOVE_ONCE) {
+                    int removedCount = 0;
+                    for (const auto& formID : rule.presets) {
+                        size_t beforeCount = data.getTotalPresetCount();
+                        data.removePreset(rule.plugin, formID);
+                        if (data.getTotalPresetCount() < beforeCount) {
+                            removedCount++;
+                            totalSpecialPresetsRemoved++;
+                        }
+                    }
+                    logFile << "  Applied FormID NPC removal: " << rule.targetKey 
+                            << " -> " << rule.plugin 
+                            << " -> Removed " << removedCount << " FormIDs" << std::endl;
+                    totalSpecialRulesApplied++;
+                    
+                } else {
+                    for (const auto& formID : rule.presets) {
+                        size_t beforeCount = data.getTotalPresetCount();
+                        data.addPreset(rule.plugin, formID);
+                        if (data.getTotalPresetCount() > beforeCount) {
+                            totalSpecialPresetsAdded++;
+                        }
+                    }
+                    logFile << "  Applied FormID NPC additive: " << rule.targetKey 
+                            << " -> " << rule.plugin 
+                            << " -> Added " << rule.presets.size() << " FormIDs" << std::endl;
+                    totalSpecialRulesApplied++;
+                }
+                
+                continue;
+            }
+            
+            if (std::find(OUTFIT_FORMID_TYPES.begin(), OUTFIT_FORMID_TYPES.end(), rule.targetKey) != OUTFIT_FORMID_TYPES.end()) {
+                shouldApply = true;
+                
+                if (rule.applyCount == 0 || rule.mode == INIRuleMode::DISABLED) {
+                    totalSpecialRulesSkipped++;
+                    logFile << "  SKIPPED (disabled): " << rule.targetKey << " -> " << rule.plugin << std::endl;
+                    continue;
+                }
+                
+                auto& data = processedData[rule.targetKey];
+                
+                if (rule.mode == INIRuleMode::EXCLUSIVE_ALWAYS) {
+                    if (data.hasPlugin(rule.plugin)) {
+                        data.removePlugin(rule.plugin);
+                    }
+                    for (const auto& formID : rule.presets) {
+                        data.addPreset(rule.plugin, formID);
+                        totalSpecialPresetsAdded++;
+                    }
+                    logFile << "  Applied Outfit FormID exclusive: " << rule.targetKey 
+                            << " -> " << rule.plugin 
+                            << " -> Replaced with " << rule.presets.size() << " FormIDs" << std::endl;
+                    totalSpecialRulesApplied++;
+                    
+                } else if (rule.mode == INIRuleMode::REMOVE_ALWAYS || rule.mode == INIRuleMode::REMOVE_ONCE) {
+                    int removedCount = 0;
+                    for (const auto& formID : rule.presets) {
+                        size_t beforeCount = data.getTotalPresetCount();
+                        data.removePreset(rule.plugin, formID);
+                        if (data.getTotalPresetCount() < beforeCount) {
+                            removedCount++;
+                            totalSpecialPresetsRemoved++;
+                        }
+                    }
+                    logFile << "  Applied Outfit FormID removal: " << rule.targetKey 
+                            << " -> " << rule.plugin 
+                            << " -> Removed " << removedCount << " FormIDs" << std::endl;
+                    totalSpecialRulesApplied++;
+                    
+                } else {
+                    for (const auto& formID : rule.presets) {
+                        size_t beforeCount = data.getTotalPresetCount();
+                        data.addPreset(rule.plugin, formID);
+                        if (data.getTotalPresetCount() > beforeCount) {
+                            totalSpecialPresetsAdded++;
+                        }
+                    }
+                    logFile << "  Applied Outfit FormID additive: " << rule.targetKey 
+                            << " -> " << rule.plugin 
+                            << " -> Added " << rule.presets.size() << " FormIDs" << std::endl;
+                    totalSpecialRulesApplied++;
+                }
+                
+                continue;
+            }
+            
+            if (std::find(OUTFIT_ARRAY_TYPES.begin(), OUTFIT_ARRAY_TYPES.end(), rule.targetKey) != OUTFIT_ARRAY_TYPES.end()) {
+                shouldApply = true;
+                
+                if (rule.applyCount == 0 || rule.mode == INIRuleMode::DISABLED) {
+                    totalSpecialRulesSkipped++;
+                    logFile << "  SKIPPED (disabled): Outfit array " << rule.targetKey << std::endl;
+                    continue;
+                }
+                
+                auto& data = processedData[rule.targetKey];
+                
+                if (rule.mode == INIRuleMode::EXCLUSIVE_ALWAYS) {
+                    data.orderedData.clear();
+                    for (const auto& item : rule.presets) {
+                        data.addPreset("", item);
+                        totalSpecialPresetsAdded++;
+                    }
+                    logFile << "  Applied Outfit exclusive: " << rule.targetKey 
+                            << " -> Replaced with " << rule.presets.size() << " items" << std::endl;
+                    totalSpecialRulesApplied++;
+                    
+                } else if (rule.mode == INIRuleMode::REMOVE_ALWAYS || rule.mode == INIRuleMode::REMOVE_ONCE) {
+                    int removedCount = 0;
+                    for (const auto& item : rule.presets) {
+                        size_t beforeCount = data.getTotalPresetCount();
+                        data.removePreset("", item);
+                        if (data.getTotalPresetCount() < beforeCount) {
+                            removedCount++;
+                            totalSpecialPresetsRemoved++;
+                        }
+                    }
+                    logFile << "  Applied Outfit removal: " << rule.targetKey 
+                            << " -> Removed " << removedCount << " items" << std::endl;
+                    totalSpecialRulesApplied++;
+                    
+                } else {
+                    int addedCount = 0;
+                    for (const auto& item : rule.presets) {
+                        size_t beforeCount = data.getTotalPresetCount();
+                        data.addPreset("", item);
+                        if (data.getTotalPresetCount() > beforeCount) {
+                            addedCount++;
+                            totalSpecialPresetsAdded++;
+                        }
+                    }
+                    logFile << "  Applied Outfit additive: " << rule.targetKey 
+                            << " -> Added " << addedCount << " new items" << std::endl;
+                    totalSpecialRulesApplied++;
+                }
+                
+                continue;
+            }
+            
+            if (rule.mode >= INIRuleMode::KEYWORD && rule.mode <= INIRuleMode::KEYHIMBO_REMOVE_ONCE) {
+                shouldApply = true;
+                
+                auto& data = processedData[rule.targetKey];
+                std::vector<std::string> matchingPresets;
+                std::vector<std::string> notFoundPresets;
+                
+                switch (rule.mode) {
+                    case INIRuleMode::KEYWORD:
+                    case INIRuleMode::KEYWORD_EXCLUSIVE:
+                    case INIRuleMode::KEYWORD_REMOVE:
+                    case INIRuleMode::KEYWORD_ONCE:
+                    case INIRuleMode::KEYWORD_EXCLUSIVE_ONCE:
+                    case INIRuleMode::KEYWORD_REMOVE_ONCE:
+                        matchingPresets = FindMatchingPresetsByKeyWord(masterPresetMap, rule.filterFragments, logFile);
+                        break;
+                        
+                    case INIRuleMode::KEYWORDCHART:
+                    case INIRuleMode::KEYWORDCHART_EXCLUSIVE:
+                    case INIRuleMode::KEYWORDCHART_REMOVE:
+                    case INIRuleMode::KEYWORDCHART_ONCE:
+                    case INIRuleMode::KEYWORDCHART_EXCLUSIVE_ONCE:
+                    case INIRuleMode::KEYWORDCHART_REMOVE_ONCE:
+                        matchingPresets = FindMatchingPresetsByKeyWordChart(masterPresetMap, rule.filterFragments, logFile);
+                        break;
+                        
+                    case INIRuleMode::KEYAUTHOR:
+                    case INIRuleMode::KEYAUTHOR_EXCLUSIVE:
+                    case INIRuleMode::KEYAUTHOR_REMOVE:
+                    case INIRuleMode::KEYAUTHOR_ONCE:
+                    case INIRuleMode::KEYAUTHOR_EXCLUSIVE_ONCE:
+                    case INIRuleMode::KEYAUTHOR_REMOVE_ONCE:
+                        matchingPresets = FindMatchingPresetsByKeyAuthor(masterPresetMap, rule.filterFragments, logFile);
+                        break;
+                        
+                    case INIRuleMode::KEYNORMAL:
+                    case INIRuleMode::KEYNORMAL_EXCLUSIVE:
+                    case INIRuleMode::KEYNORMAL_REMOVE:
+                    case INIRuleMode::KEYNORMAL_ONCE:
+                    case INIRuleMode::KEYNORMAL_EXCLUSIVE_ONCE:
+                    case INIRuleMode::KEYNORMAL_REMOVE_ONCE:
+                        matchingPresets = FindMatchingPresetsByFamily(masterPresetMap, rule.filterFragments, "KeyNormal", logFile, notFoundPresets);
+                        break;
+                        
+                    case INIRuleMode::KEYUBE:
+                    case INIRuleMode::KEYUBE_EXCLUSIVE:
+                    case INIRuleMode::KEYUBE_REMOVE:
+                    case INIRuleMode::KEYUBE_ONCE:
+                    case INIRuleMode::KEYUBE_EXCLUSIVE_ONCE:
+                    case INIRuleMode::KEYUBE_REMOVE_ONCE:
+                        matchingPresets = FindMatchingPresetsByFamily(masterPresetMap, rule.filterFragments, "KeyUBE", logFile, notFoundPresets);
+                        break;
+                        
+                    case INIRuleMode::KEYHIMBO:
+                    case INIRuleMode::KEYHIMBO_EXCLUSIVE:
+                    case INIRuleMode::KEYHIMBO_REMOVE:
+                    case INIRuleMode::KEYHIMBO_ONCE:
+                    case INIRuleMode::KEYHIMBO_EXCLUSIVE_ONCE:
+                    case INIRuleMode::KEYHIMBO_REMOVE_ONCE:
+                        matchingPresets = FindMatchingPresetsByFamily(masterPresetMap, rule.filterFragments, "KeyHIMBO", logFile, notFoundPresets);
+                        break;
+                        
+                    default:
+                        break;
+                }
+                
+                for (const auto& notFound : notFoundPresets) {
+                    logFile << "    WARNING: Special rule preset '" << notFound << "' not found in specified family - SKIPPED" << std::endl;
+                }
+                
+                if (!matchingPresets.empty()) {
+                    if (IsExclusiveMode(rule.mode)) {
+                        if (data.hasPlugin(rule.plugin)) {
+                            data.removePlugin(rule.plugin);
+                        }
+                        for (const auto& preset : matchingPresets) {
+                            data.addPreset(rule.plugin, preset);
+                        }
+                        logFile << "  Applied special exclusive filtering: " << rule.ruleType 
+                                << " -> Target: " << rule.plugin << " -> Replaced with " 
+                                << matchingPresets.size() << " matching presets" << std::endl;
+                        
+                    } else if (IsRemovalMode(rule.mode)) {
+                        int removedCount = 0;
+                        for (const auto& preset : matchingPresets) {
+                            size_t beforeCount = data.getTotalPresetCount();
+                            data.removePreset(rule.plugin, preset);
+                            if (data.getTotalPresetCount() < beforeCount) {
+                                removedCount++;
+                                totalSpecialPresetsRemoved++;
+                            }
+                        }
+                        logFile << "  Applied special removal filtering: " << rule.ruleType 
+                                << " -> Target: " << rule.plugin << " -> Removed " 
+                                << removedCount << " matching presets" << std::endl;
+                        
+                    } else {
+                        int addedCount = 0;
+                        for (const auto& preset : matchingPresets) {
+                            size_t beforeCount = data.getTotalPresetCount();
+                            data.addPreset(rule.plugin, preset);
+                            if (data.getTotalPresetCount() > beforeCount) {
+                                addedCount++;
+                                totalSpecialPresetsAdded++;
+                            }
+                        }
+                        logFile << "  Applied special additive filtering: " << rule.ruleType 
+                                << " -> Target: " << rule.plugin << " -> Added " 
+                                << addedCount << " new matching presets" << std::endl;
+                    }
+                    
+                    totalSpecialRulesApplied++;
+                } else {
+                    logFile << "  No presets matched special filtering criteria: " << rule.ruleType 
+                            << " -> Target: " << rule.plugin << std::endl;
+                }
+                
+            } else if (rule.applyCount == -1 || rule.applyCount > 0) {
+                shouldApply = true;
+                
+                auto& data = processedData[rule.targetKey];
+                
+                int presetsAdded = 0;
+                for (const auto& preset : rule.presets) {
+                    size_t beforeCount = data.getTotalPresetCount();
+                    data.addPreset(rule.plugin, preset);
+                    if (data.getTotalPresetCount() > beforeCount) {
+                        presetsAdded++;
+                        totalSpecialPresetsAdded++;
+                    }
+                }
+                
+                if (presetsAdded > 0) {
+                    totalSpecialRulesApplied++;
+                    logFile << "  Applied special rule: " << rule.ruleType
+                            << " -> Target: " << rule.plugin << " -> Added "
+                            << presetsAdded << " new presets" << std::endl;
+                } else {
+                    logFile << "  No new presets added (all already exist): " << rule.ruleType
+                            << " -> Target: " << rule.plugin << std::endl;
+                }
+                
+            } else {
+                shouldApply = false;
+                totalSpecialRulesSkipped++;
+                logFile << "  Skipped special rule (count=0): " << rule.ruleType
+                        << " -> Target: " << rule.plugin << std::endl;
+            }
+        }
+        
+        logFile << std::endl;
+        logFile << "Special Rules Summary:" << std::endl;
+        logFile << "  Total special rules processed: " << totalSpecialRulesProcessed << std::endl;
+        logFile << "  Total special rules applied: " << totalSpecialRulesApplied << std::endl;
+        logFile << "  Total special rules skipped: " << totalSpecialRulesSkipped << std::endl;
+        logFile << "  Total special presets added: " << totalSpecialPresetsAdded << std::endl;
+        logFile << "  Total special presets removed: " << totalSpecialPresetsRemoved << std::endl;
+        logFile << std::endl;
+        
+        return (totalSpecialRulesApplied > 0);
+        
+    } catch (const std::exception& e) {
+        logFile << "ERROR in ApplySpecialRules: " << e.what() << std::endl;
+        return false;
+    } catch (...) {
+        logFile << "ERROR in ApplySpecialRules: Unknown exception" << std::endl;
+        return false;
+    }
+}
 
 bool PerformSimpleJsonIntegrityCheck(const fs::path& jsonPath, std::ofstream& logFile) {
     try {
@@ -3027,7 +4020,7 @@ bool PerformSimpleJsonIntegrityCheck(const fs::path& jsonPath, std::ofstream& lo
             logFile << "ERROR: JSON file is too small (" << fileSize << " bytes)" << std::endl;
             return false;
         }
-
+        
         std::string content = ReadFileWithEncoding(jsonPath);
         if (content.empty()) {
             logFile << "ERROR: JSON file is empty after reading" << std::endl;
@@ -3052,8 +4045,9 @@ bool PerformSimpleJsonIntegrityCheck(const fs::path& jsonPath, std::ofstream& lo
         int line = 1;
         int col = 1;
 
-        for (size_t i = 0; i < content.length(); i++) {
-            char c = content[i];
+        for (size_t i = 0; i < content.size(); ++i) {
+            unsigned char c = static_cast<unsigned char>(content[i]);
+            
             if (c == '\n') {
                 line++;
                 col = 1;
@@ -3289,8 +4283,6 @@ bool PerformTripleValidation(const fs::path& jsonPath, const fs::path& backupPat
     }
 }
 
-// ===== BACKUP AND RESTORE FUNCTIONS =====
-
 bool PerformLiteralJsonBackup(const fs::path& originalJsonPath, const fs::path& backupJsonPath,
                               std::ofstream& logFile) {
     try {
@@ -3422,8 +4414,6 @@ bool RestoreJsonFromBackup(const fs::path& backupJsonPath, const fs::path& origi
     }
 }
 
-// ===== SMART CLEANING FUNCTIONS WITH INTELLIGENT PRESET MATCHING =====
-
 PresetMapData BuildPresetNameMap(const fs::path& bodySlidePresetsPath, std::ofstream& logFile) {
     PresetMapData presetData;
     
@@ -3432,6 +4422,10 @@ PresetMapData BuildPresetNameMap(const fs::path& bodySlidePresetsPath, std::ofst
             logFile << "WARNING: BodySlide presets folder not found for building preset map" << std::endl;
             return presetData;
         }
+        
+        logFile << std::endl;
+        logFile << "Building Master Preset Map from XML files..." << std::endl;
+        logFile << "----------------------------------------------------" << std::endl;
         
         int totalXmlFiles = 0;
         int totalPresetsExtracted = 0;
@@ -3481,7 +4475,7 @@ PresetMapData BuildPresetNameMap(const fs::path& bodySlidePresetsPath, std::ofst
                                     
                                     presetData.filenameToInternalMap[info.filename] = info.internalName;
                                     
-                                    if (analysis.hasUBE) {
+                                    if (analysis.hasUBE && !analysis.isException3BA) {
                                         presetData.ubePresetNames.insert(presetNameToUse);
                                         ubePresetsDetected++;
                                         logFile << "  [UBE DETECTED] " << presetNameToUse 
@@ -3842,15 +4836,16 @@ void PerformSmartCleaning(std::map<std::string, OrderedPluginData>& processedDat
         
         data.orderedData = cleanedData;
     }
-    
+
     if (config.blacklistedPresetsSmartCleaningFromAll) {
         logFile << "Cleaning other blacklisted sections..." << std::endl;
         
         const std::vector<std::string> blacklistKeysToClean = {
-            "blacklistedNpcs", "blacklistedNpcsFormID", "blacklistedNpcsPluginFemale", 
-            "blacklistedNpcsPluginMale", "blacklistedRacesFemale", "blacklistedRacesMale",
-            "blacklistedOutfitsFromORefitFormID", "blacklistedOutfitsFromORefit",
-            "blacklistedOutfitsFromORefitPlugin"
+            "blacklistedNpcs",
+            "blacklistedNpcsPluginFemale",
+            "blacklistedNpcsPluginMale",
+            "blacklistedRacesFemale",
+            "blacklistedRacesMale"
         };
         
         for (const auto& key : blacklistKeysToClean) {
@@ -3925,71 +4920,26 @@ void PerformSmartCleaning(std::map<std::string, OrderedPluginData>& processedDat
             data.orderedData = cleanedData;
         }
     }
-    
+
     if (config.outfitsForceReSmartCleaning) {
-        logFile << "Cleaning outfitsForceRefit sections..." << std::endl;
-        
-        const std::vector<std::string> outfitKeysToClean = {
-            "outfitsForceRefitFormID", "outfitsForceRefit"
-        };
-        
-        for (const auto& key : outfitKeysToClean) {
-            auto& data = processedData[key];
-            std::vector<std::pair<std::string, std::vector<std::string>>> cleanedData;
-            
-            for (auto& [plugin, presets] : data.orderedData) {
-                std::vector<std::string> cleanedPresets;
-                
-                for (const auto& preset : presets) {
-                    std::string cleanPreset = preset;
-                    bool hasExclamation = false;
-                    
-                    if (!cleanPreset.empty() && cleanPreset[0] == '!') {
-                        cleanPreset = cleanPreset.substr(1);
-                        hasExclamation = true;
-                    }
-                    
-                    PresetMatchResult matchResult = FindPresetMatch(cleanPreset, presetData, logFile);
-                    
-                    if (matchResult.found) {
-                        std::string finalPresetName = matchResult.actualPresetName;
-                        
-                        if (hasExclamation && (finalPresetName.empty() || finalPresetName[0] != '!')) {
-                            finalPresetName = "!" + finalPresetName;
-                        }
-                        
-                        cleanedPresets.push_back(finalPresetName);
-                        totalPresetsKept++;
-                        
-                        if (matchResult.matchLevel == 0) {
-                            totalPluginsProtected++;
-                        }
-                        
-                        if (preset != finalPresetName && matchResult.matchLevel > 0) {
-                            totalPresetsCorrected++;
-                            correctedPresets[preset] = finalPresetName;
-                            logFile << "  Corrected in " << key << ": \"" 
-                                    << preset << "\" -> \"" << finalPresetName << "\" (Level " 
-                                    << matchResult.matchLevel << " match)" << std::endl;
-                        }
-                    } else {
-                        removedPresets.insert(cleanPreset);
-                        totalPresetsRemoved++;
-                        logFile << "  Removed from " << key << ": " << cleanPreset << std::endl;
-                        
-                        if (std::find(missingPresetsFromIni.begin(), missingPresetsFromIni.end(), cleanPreset) == missingPresetsFromIni.end()) {
-                            missingPresetsFromIni.push_back(cleanPreset);
-                        }
-                    }
-                }
-                
-                if (!cleanedPresets.empty()) {
-                    cleanedData.emplace_back(plugin, cleanedPresets);
-                }
-            }
-            
-            data.orderedData = cleanedData;
-        }
+        logFile << std::endl;
+        logFile << "====================================================" << std::endl;
+        logFile << "OUTFIT SMART CLEANING: ENABLED BUT BYPASSED" << std::endl;
+        logFile << "====================================================" << std::endl;
+        logFile << std::endl;
+        logFile << "The following 5 sections are PRESERVED as-is:" << std::endl;
+        logFile << "  1. blacklistedOutfitsFromORefitFormID" << std::endl;
+        logFile << "  2. blacklistedOutfitsFromORefit" << std::endl;
+        logFile << "  3. blacklistedOutfitsFromORefitPlugin" << std::endl;
+        logFile << "  4. outfitsForceRefitFormID" << std::endl;
+        logFile << "  5. outfitsForceRefit" << std::endl;
+        logFile << std::endl;
+        logFile << "REASON: These sections contain armor/outfit names and plugin references," << std::endl;
+        logFile << "        NOT body presets. Smart Cleaning only validates against BodySlide XMLs." << std::endl;
+        logFile << std::endl;
+        logFile << "NO CLEANING PERFORMED - All entries preserved." << std::endl;
+        logFile << "====================================================" << std::endl;
+        logFile << std::endl;
     }
     
     logFile << std::endl;
@@ -4013,8 +4963,6 @@ void PerformSmartCleaning(std::map<std::string, OrderedPluginData>& processedDat
     
     logFile << std::endl;
 }
-
-// ===== LOG GENERATION FUNCTIONS =====
 
 void GenerateDoctorLog(const fs::path& bodySlidePresetsPath, const fs::path& logDoctorPath, std::ofstream& mainLogFile) {
     try {
@@ -4281,7 +5229,7 @@ void GenerateHelperLog(const PresetMapData& presetData, const fs::path& logHelpe
         helperLog << std::endl;
         helperLog << ";Code design examples: Very similar to SPID but shorter and simpler." << std::endl;
         helperLog << std::endl;
-        helperLog << "; npcFormID = xx0001|Preset,...|, 1, 0, -, *, 1-, 1*, KeyWord, KeyNormal, etc.             FormID" << std::endl;
+        helperLog << "; npcFormID = Plugin.esp|FormID,Preset,...|, 1, 0, -, *, 1-, 1*, KeyWord, KeyNormal, etc.  FormID with presets" << std::endl;
         helperLog << "; npc = EditorID|Preset,...|, 1, 0, -, *, 1-, 1*, KeyWord, KeyNormal, etc.                 EditorID name like 000Rabbit_NPC or Serana" << std::endl;
         helperLog << "; factionFemale = Faction|Preset,...|, 1, 0, -, *, 1-, 1*, KeyWord, KeyNormal, etc.        Faction name like ImperialFaction or KhajiitFaction" << std::endl;
         helperLog << "; factionMale = Faction|Preset,...|, 1, 0, -, *, 1-, 1*, KeyWord, KeyNormal, etc." << std::endl;
@@ -4297,8 +5245,17 @@ void GenerateHelperLog(const PresetMapData& presetData, const fs::path& logHelpe
         helperLog << std::endl;
         helperLog << "; BLACKLIST TYPES AVAILABLE:" << std::endl;
         helperLog << "; blacklistedNpcs, blacklistedNpcsPluginFemale, blacklistedNpcsPluginMale" << std::endl;
-        helperLog << "; blacklistedRacesFemale, blacklistedRacesMale, blacklistedOutfitsFromORefit" << std::endl;
-        helperLog << "; blacklistedOutfitsFromORefitPlugin, outfitsForceRefit, blacklistedPresetsFromRandomDistribution" << std::endl;
+        helperLog << "; blacklistedRacesFemale, blacklistedRacesMale, blacklistedPresetsFromRandomDistribution" << std::endl;
+        helperLog << std::endl;
+        helperLog << "; NEW FORMID RULES:" << std::endl;
+        helperLog << "; blacklistedNpcsFormID = Plugin.esp|FormID1,FormID2|, 1, 0, -, *                        NPC FormIDs in plugin" << std::endl;
+        helperLog << std::endl;
+        helperLog << "; NEW OUTFIT RULES:" << std::endl;
+        helperLog << "; outfits = blacklistedOutfitsFromORefit|Outfit1,Outfit2|, 1, 0, -, *                    Outfit names to blacklist" << std::endl;
+        helperLog << "; outfits = blacklistedOutfitsFromORefitPlugin|Plugin.esp|, 1, 0, -, *                   Plugin to blacklist outfits" << std::endl;
+        helperLog << "; outfits = outfitsForceRefit|Outfit1,Outfit2|, 1, 0, -, *                               Outfits to force refit" << std::endl;
+        helperLog << "; blacklistedOutfitsFromORefitFormID = Plugin.esp|FormID1,FormID2|, 1, 0, -, *           Outfit FormIDs to blacklist" << std::endl;
+        helperLog << "; outfitsForceRefitFormID = Plugin.esp|FormID1,FormID2|, 1, 0, -, *                      Outfit FormIDs to force refit" << std::endl;
         helperLog << std::endl;
         helperLog << "; NEW FILTERING MODES:" << std::endl;
         helperLog << "; KeyWord, KeyWord*, KeyWord-, KeyWord1, KeyWord1*, KeyWord1- - Search entire preset name" << std::endl;
@@ -4327,20 +5284,40 @@ void GenerateHelperLog(const PresetMapData& presetData, const fs::path& logHelpe
         helperLog << "blacklisted = blacklistedNpcs|BadPreset1,BadPreset2|" << std::endl;
         helperLog << std::endl;
         
-        helperLog << ";Example 4: Remove specific presets once, then disable" << std::endl;
+        helperLog << ";Example 4: Blacklist NPC by FormID" << std::endl;
+        helperLog << "blacklistedNpcsFormID = Skyrim.esm|0001339C,0001A696|" << std::endl;
+        helperLog << std::endl;
+        
+        helperLog << ";Example 5: Blacklist outfit by name" << std::endl;
+        helperLog << "outfits = blacklistedOutfitsFromORefit|LS Force Naked,OBody Nude 32|" << std::endl;
+        helperLog << std::endl;
+        
+        helperLog << ";Example 6: Blacklist outfit by plugin" << std::endl;
+        helperLog << "outfits = blacklistedOutfitsFromORefitPlugin|NewmChainmail.esp|" << std::endl;
+        helperLog << std::endl;
+        
+        helperLog << ";Example 7: Force refit outfit by FormID" << std::endl;
+        helperLog << "outfitsForceRefitFormID = [full_inu] Queen Marika's Dress.esp|FE000803|" << std::endl;
+        helperLog << std::endl;
+        
+        helperLog << ";Example 8: Remove specific presets once, then disable" << std::endl;
         helperLog << "raceFemale = NordRace|UnwantedPreset1,UnwantedPreset2|1-" << std::endl;
         helperLog << std::endl;
         
-        helperLog << ";Example 5: Replace all with specific presets once" << std::endl;
+        helperLog << ";Example 9: Replace all with specific presets once" << std::endl;
         helperLog << "raceFemale = NordRace|OnlyThesePresets1,OnlyThesePresets2|1*" << std::endl;
         helperLog << std::endl;
         
-        helperLog << ";Example 6: Filter by Normal family (only CBBE/3BA/BHUNP presets)" << std::endl;
+        helperLog << ";Example 10: Filter by Normal family (only CBBE/3BA/BHUNP presets)" << std::endl;
         helperLog << "raceFemale = NordRace|Preset1,Preset2,Preset3|KeyNormal" << std::endl;
         helperLog << std::endl;
         
-        helperLog << ";Example 7: Filter by UBE family with exclusive replacement (one time)" << std::endl;
+        helperLog << ";Example 11: Filter by UBE family with exclusive replacement (one time)" << std::endl;
         helperLog << "raceFemale = 00UBE_NordRace|UBEPreset1,UBEPreset2|KeyUBE1*" << std::endl;
+        helperLog << std::endl;
+        
+        helperLog << ";Example 12: npcFormID with FormID and presets" << std::endl;
+        helperLog << "npcFormID = YurianaWench.esp|000817,PresetA,PresetB|" << std::endl;
         helperLog << std::endl;
         
         if (normalPresets.size() >= 2) {
@@ -4416,92 +5393,240 @@ void GenerateINIAnalysisLog(const fs::path& dataPath, const fs::path& logINIAnal
         int totalRulesFound = 0;
         
         try {
-            for (const auto& entry : fs::directory_iterator(dataPath)) {
-                if (entry.is_regular_file()) {
-                    std::string filename = entry.path().filename().string();
-                    if (StartsWith(filename, "OBodyNG_PDA_") && EndsWith(filename, ".ini")) {
-                        totalINIFiles++;
-                        
-                        iniLog << "----------------------------------------------------" << std::endl;
-                        iniLog << "FILE: " << filename << std::endl;
-                        iniLog << "----------------------------------------------------" << std::endl;
-                        
-                        std::string iniContent = ReadFileWithEncoding(entry.path());
-                        if (iniContent.empty()) {
-                            iniLog << "ERROR: Could not read file or file is empty" << std::endl;
-                            iniLog << std::endl;
+            if (!fs::exists(dataPath)) {
+                iniLog << "ERROR: Data path does not exist: " << dataPath.string() << std::endl;
+                mainLogFile << "ERROR: Data path does not exist for INI Analysis" << std::endl;
+                iniLog.close();
+                return;
+            }
+            
+            if (!fs::is_directory(dataPath)) {
+                iniLog << "ERROR: Data path is not a directory: " << dataPath.string() << std::endl;
+                mainLogFile << "ERROR: Data path is not a directory for INI Analysis" << std::endl;
+                iniLog.close();
+                return;
+            }
+            
+            std::vector<fs::path> iniFiles;
+            
+            try {
+                for (const auto& entry : fs::directory_iterator(dataPath)) {
+                    try {
+                        if (!entry.is_regular_file()) {
                             continue;
                         }
                         
-                        size_t totalLines = std::count(iniContent.begin(), iniContent.end(), '\n');
-                        size_t fileSize = iniContent.size();
-                        
-                        iniLog << "File size: " << fileSize << " bytes" << std::endl;
-                        iniLog << "Total lines: " << totalLines << std::endl;
-                        iniLog << std::endl;
-                        
-                        std::stringstream iniStream(iniContent);
-                        std::string line;
-                        int lineNumber = 0;
-                        int rulesInFile = 0;
-                        int commentsInFile = 0;
-                        int emptyLinesInFile = 0;
-                        
-                        while (std::getline(iniStream, line)) {
-                            lineNumber++;
-                            
-                            if (line.size() > 10000) {
-                                iniLog << "  [LINE " << lineNumber << "] WARNING: Abnormally long line (" 
-                                       << line.size() << " chars) - SKIPPED" << std::endl;
-                                continue;
-                            }
-                            
-                            while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || 
-                                   line.back() == '\r' || line.back() == '\n')) {
-                                line.pop_back();
-                            }
-                            
-                            std::string originalLine = line;
-                            
-                            line = RemoveCommentsSafely(line);
-                            
-                            std::string trimmedLine = Trim(line);
-                            
-                            if (trimmedLine.empty()) {
-                                if (!originalLine.empty() && (originalLine[0] == ';' || originalLine[0] == '#')) {
-                                    commentsInFile++;
-                                } else {
-                                    emptyLinesInFile++;
-                                }
-                                continue;
-                            }
-                            
-                            size_t equalPos = trimmedLine.find('=');
-                            if (equalPos != std::string::npos) {
-                                std::string key = Trim(trimmedLine.substr(0, equalPos));
-                                std::string value = Trim(trimmedLine.substr(equalPos + 1));
-                                
-                                if (!value.empty()) {
-                                    rulesInFile++;
-                                    totalRulesFound++;
-                                    
-                                    iniLog << "  [LINE " << lineNumber << "] " << key << " = " << value << std::endl;
+                        std::string filename;
+                        try {
+                            auto wfilename = entry.path().filename().wstring();
+                            filename = SafeWideStringToString(wfilename);
+                        } catch (...) {
+                            try {
+                                auto u8name = entry.path().filename().u8string();
+                                filename = std::string(u8name.begin(), u8name.end());
+                            } catch (...) {
+                                try {
+                                    filename = entry.path().filename().string();
+                                } catch (...) {
+                                    mainLogFile << "  WARNING: Could not read filename in INI Analysis, skipping entry" << std::endl;
+                                    continue;
                                 }
                             }
                         }
                         
-                        iniLog << std::endl;
-                        iniLog << "Summary for " << filename << ":" << std::endl;
-                        iniLog << "  Total rules detected: " << rulesInFile << std::endl;
-                        iniLog << "  Comment lines: " << commentsInFile << std::endl;
-                        iniLog << "  Empty lines: " << emptyLinesInFile << std::endl;
-                        iniLog << std::endl;
+                        if (filename.empty()) {
+                            continue;
+                        }
+                        
+                        std::string lowerFilename = ToLowerCase(filename);
+                        
+                        if (StartsWith(lowerFilename, "obodyng_pda_") && EndsWith(lowerFilename, ".ini")) {
+                            iniFiles.push_back(entry.path());
+                        }
+                        
+                    } catch (const std::exception& e) {
+                        mainLogFile << "  WARNING: Exception reading file entry in INI Analysis: " << e.what() << std::endl;
+                        continue;
+                    } catch (...) {
+                        mainLogFile << "  WARNING: Unknown exception reading file entry in INI Analysis" << std::endl;
+                        continue;
                     }
                 }
+            } catch (const std::exception& e) {
+                iniLog << "ERROR scanning directory: " << e.what() << std::endl;
+                iniLog << "This may be due to special characters in file paths." << std::endl;
+                iniLog << "Attempting alternative scan method..." << std::endl;
+                iniLog << std::endl;
+                mainLogFile << "WARNING: Standard directory scan failed in INI Analysis: " << e.what() << std::endl;
+                mainLogFile << "Attempting alternative method..." << std::endl;
+                
+                std::string dataPathStr = dataPath.string();
+                if (!dataPathStr.empty() && dataPathStr.back() != '\\') {
+                    dataPathStr += '\\';
+                }
+                dataPathStr += '\\';
+                
+                try {
+                    fs::path fallbackPath(dataPathStr);
+                    
+                    if (fs::exists(fallbackPath) && fs::is_directory(fallbackPath)) {
+                        for (const auto& entry : fs::directory_iterator(fallbackPath)) {
+                            try {
+                                if (!entry.is_regular_file()) {
+                                    continue;
+                                }
+                                
+                                std::string filename;
+                                try {
+                                    auto wfilename = entry.path().filename().wstring();
+                                    filename = SafeWideStringToString(wfilename);
+                                } catch (...) {
+                                    try {
+                                        auto u8name = entry.path().filename().u8string();
+                                        filename = std::string(u8name.begin(), u8name.end());
+                                    } catch (...) {
+                                        try {
+                                            filename = entry.path().filename().string();
+                                        } catch (...) {
+                                            continue;
+                                        }
+                                    }
+                                }
+                                
+                                if (filename.empty()) {
+                                    continue;
+                                }
+                                
+                                std::string lowerFilename = ToLowerCase(filename);
+                                
+                                if (StartsWith(lowerFilename, "obodyng_pda_") && EndsWith(lowerFilename, ".ini")) {
+                                    iniFiles.push_back(entry.path());
+                                }
+                                
+                            } catch (...) {
+                                continue;
+                            }
+                        }
+                    }
+                } catch (const std::exception& e) {
+                    iniLog << "ERROR: Alternative scan method also failed: " << e.what() << std::endl;
+                    mainLogFile << "ERROR: Alternative INI scan method failed: " << e.what() << std::endl;
+                } catch (...) {
+                    iniLog << "ERROR: Alternative scan method failed with unknown exception" << std::endl;
+                    mainLogFile << "ERROR: Alternative INI scan failed with unknown exception" << std::endl;
+                }
             }
+            
+            if (iniFiles.empty()) {
+                iniLog << "No OBodyNG_PDA_*.ini files found in data directory." << std::endl;
+                iniLog << "Searched path: " << dataPath.string() << std::endl;
+                mainLogFile << "INFO: No INI files found for analysis" << std::endl;
+            } else {
+                mainLogFile << "Found " << iniFiles.size() << " INI files for analysis" << std::endl;
+            }
+            
+            for (const auto& iniPath : iniFiles) {
+                std::string filename;
+                try {
+                    auto wfilename = iniPath.filename().wstring();
+                    filename = SafeWideStringToString(wfilename);
+                } catch (...) {
+                    try {
+                        auto u8name = iniPath.filename().u8string();
+                        filename = std::string(u8name.begin(), u8name.end());
+                    } catch (...) {
+                        try {
+                            filename = iniPath.filename().string();
+                        } catch (...) {
+                            filename = "unknown.ini";
+                        }
+                    }
+                }
+                
+                totalINIFiles++;
+                
+                iniLog << "----------------------------------------------------" << std::endl;
+                iniLog << "FILE: " << filename << std::endl;
+                iniLog << "----------------------------------------------------" << std::endl;
+                
+                std::string iniContent = ReadFileWithEncoding(iniPath);
+                if (iniContent.empty()) {
+                    iniLog << "ERROR: Could not read file or file is empty" << std::endl;
+                    iniLog << std::endl;
+                    continue;
+                }
+                
+                size_t totalLines = std::count(iniContent.begin(), iniContent.end(), '\n');
+                size_t fileSize = iniContent.size();
+                
+                iniLog << "File size: " << fileSize << " bytes" << std::endl;
+                iniLog << "Total lines: " << totalLines << std::endl;
+                iniLog << std::endl;
+                
+                std::stringstream iniStream(iniContent);
+                std::string line;
+                int lineNumber = 0;
+                int rulesInFile = 0;
+                int commentsInFile = 0;
+                int emptyLinesInFile = 0;
+                
+                while (std::getline(iniStream, line)) {
+                    lineNumber++;
+                    
+                    if (line.size() > 10000) {
+                        iniLog << "  [LINE " << lineNumber << "] WARNING: Abnormally long line (" 
+                               << line.size() << " chars) - SKIPPED" << std::endl;
+                        continue;
+                    }
+                    
+                    while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || 
+                           line.back() == '\r' || line.back() == '\n')) {
+                        line.pop_back();
+                    }
+                    
+                    std::string originalLine = line;
+                    
+                    line = RemoveCommentsSafely(line);
+                    
+                    std::string trimmedLine = Trim(line);
+                    
+                    if (trimmedLine.empty()) {
+                        if (!originalLine.empty() && (originalLine[0] == ';' || originalLine[0] == '#')) {
+                            commentsInFile++;
+                        } else {
+                            emptyLinesInFile++;
+                        }
+                        continue;
+                    }
+                    
+                    size_t equalPos = trimmedLine.find('=');
+                    if (equalPos != std::string::npos) {
+                        std::string key = Trim(trimmedLine.substr(0, equalPos));
+                        std::string value = Trim(trimmedLine.substr(equalPos + 1));
+                        
+                        if (!value.empty()) {
+                            rulesInFile++;
+                            totalRulesFound++;
+                            
+                            iniLog << "  [LINE " << lineNumber << "] " << key << " = " << value << std::endl;
+                        }
+                    }
+                }
+                
+                iniLog << std::endl;
+                iniLog << "Summary for " << filename << ":" << std::endl;
+                iniLog << "  Total rules detected: " << rulesInFile << std::endl;
+                iniLog << "  Comment lines: " << commentsInFile << std::endl;
+                iniLog << "  Empty lines: " << emptyLinesInFile << std::endl;
+                iniLog << std::endl;
+            }
+            
         } catch (const std::exception& e) {
             iniLog << "ERROR scanning directory: " << e.what() << std::endl;
             mainLogFile << "ERROR in INI Analysis: " << e.what() << std::endl;
+        } catch (...) {
+            iniLog << "ERROR scanning directory: Unknown exception" << std::endl;
+            mainLogFile << "ERROR in INI Analysis: Unknown exception" << std::endl;
         }
         
         iniLog << "====================================================" << std::endl;
@@ -4526,8 +5651,6 @@ void GenerateINIAnalysisLog(const fs::path& dataPath, const fs::path& logINIAnal
         mainLogFile << "ERROR in GenerateINIAnalysisLog: Unknown exception" << std::endl;
     }
 }
-
-// ===== JSON INDENTATION CORRECTION =====
 
 bool CorrectJsonIndentation(const fs::path& jsonPath, const fs::path& analysisDir, std::ofstream& logFile) {
     try {
@@ -4892,8 +6015,6 @@ bool CorrectJsonIndentation(const fs::path& jsonPath, const fs::path& analysisDi
     }
 }
 
-// ===== JSON PARSING FUNCTIONS =====
-
 std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugins(const std::string& content) {
     std::vector<std::pair<std::string, std::vector<std::string>>> result;
     if (content.empty()) return result;
@@ -4901,7 +6022,7 @@ std::vector<std::pair<std::string, std::vector<std::string>>> parseOrderedPlugin
     const char* str = content.c_str();
     size_t len = content.length();
     size_t pos = 0;
-    const size_t maxIters = 100000;
+    const size_t maxIters = std::max(100000ULL, len / 10);
     size_t iter = 0;
 
     result.reserve(200);
@@ -5019,7 +6140,7 @@ std::vector<std::string> parseArray(const std::string& content) {
     const char* str = content.c_str();
     size_t len = content.length();
     size_t pos = 0;
-    const size_t maxIters = 100000;
+    const size_t maxIters = std::max(100000ULL, len / 10);
     size_t iter = 0;
 
     result.reserve(100);
@@ -5073,16 +6194,17 @@ bool parseBooleanValue(const std::string& content) {
     return (trimmed == "true");
 }
 
-// ===== JSON PRESERVE AND UPDATE FUNCTIONS =====
-
 std::string PreserveOriginalSections(const std::string& originalJson,
                                       const std::map<std::string, OrderedPluginData>& processedData,
+                                      const NpcFormIDData& npcFormIDProcessedData,
                                       bool currentBlacklistedPresetsShowValue,
                                       bool newBlacklistedPresetsShowValue,
                                       std::ofstream& logFile) {
     try {
-        const std::set<std::string> validKeys = {"npcFormID",       "npc",           "factionFemale", "factionMale",
-                                                  "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+        const std::set<std::string> validKeys = {"npc", "factionFemale", "factionMale",
+                                                  "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale",
+                                                  "blacklistedNpcsFormID", "blacklistedOutfitsFromORefitFormID", 
+                                                  "outfitsForceRefitFormID"};
 
         const std::set<std::string> arrayKeys = {"blacklistedPresetsFromRandomDistribution", "blacklistedNpcs",
                                                   "blacklistedNpcsPluginFemale", "blacklistedNpcsPluginMale",
@@ -5091,6 +6213,82 @@ std::string PreserveOriginalSections(const std::string& originalJson,
                                                   "outfitsForceRefit"};
 
         std::string result = originalJson;
+
+        if (!npcFormIDProcessedData.isEmpty()) {
+            std::string keyPattern = "\"npcFormID\"";
+            size_t keyPos = result.find(keyPattern);
+
+            if (keyPos != std::string::npos) {
+                size_t colonPos = result.find(":", keyPos);
+                if (colonPos != std::string::npos) {
+                    size_t valueStart = colonPos + 1;
+
+                    while (valueStart < result.length() && std::isspace(static_cast<unsigned char>(result[valueStart]))) {
+                        valueStart++;
+                    }
+
+                    size_t valueEnd = valueStart;
+                    if (valueStart < result.length() && result[valueStart] == '{') {
+                        int braceCount = 1;
+                        valueEnd = valueStart + 1;
+                        bool inString = false;
+                        bool escape = false;
+
+                        while (valueEnd < result.length() && braceCount > 0) {
+                            char c = result[valueEnd];
+
+                            if (c == '"' && !escape) {
+                                inString = !inString;
+                            } else if (!inString) {
+                                if (c == '{')
+                                    braceCount++;
+                                else if (c == '}')
+                                    braceCount--;
+                            }
+
+                            escape = (c == '\\' && !escape);
+                            valueEnd++;
+                        }
+
+                        std::ostringstream newValue;
+                        newValue << "{\n";
+
+                        bool firstPlugin = true;
+                        for (const auto& [plugin, formIDs] : npcFormIDProcessedData.data) {
+                            if (!firstPlugin) newValue << ",\n";
+                            firstPlugin = false;
+
+                            newValue << "        \"" << EscapeJson(plugin) << "\": {\n";
+
+                            bool firstFormID = true;
+                            for (const auto& [formID, presets] : formIDs) {
+                                if (!firstFormID) newValue << ",\n";
+                                firstFormID = false;
+
+                                newValue << "            \"" << EscapeJson(formID) << "\": [\n";
+
+                                bool firstPreset = true;
+                                for (const auto& preset : presets) {
+                                    if (!firstPreset) newValue << ",\n";
+                                    firstPreset = false;
+                                    newValue << "                \"" << EscapeJson(preset) << "\"";
+                                }
+
+                                newValue << "\n            ]";
+                            }
+
+                            newValue << "\n        }";
+                        }
+
+                        newValue << "\n    }";
+
+                        result.replace(valueStart, valueEnd - valueStart, newValue.str());
+                        logFile << "INFO: Successfully updated npcFormID with double-level structure and proper 4-space indentation"
+                                << std::endl;
+                    }
+                }
+            }
+        }
 
         for (const auto& [key, data] : processedData) {
             if (validKeys.count(key) && !data.orderedData.empty()) {
@@ -5255,10 +6453,13 @@ std::string PreserveOriginalSections(const std::string& originalJson,
 
 bool CheckIfChangesNeeded(const std::string& originalJson,
                          const std::map<std::string, OrderedPluginData>& processedData,
+                         const NpcFormIDData& npcFormIDProcessedData,
                          bool currentBlacklistedPresetsShowValue,
                          bool newBlacklistedPresetsShowValue) {
-    const std::vector<std::string> validKeys = {"npcFormID", "npc", "factionFemale", "factionMale",
-                                                "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"};
+    const std::vector<std::string> validKeys = {"npc", "factionFemale", "factionMale",
+                                                "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale",
+                                                "blacklistedNpcsFormID", "blacklistedOutfitsFromORefitFormID",
+                                                "outfitsForceRefitFormID"};
 
     const std::vector<std::string> arrayKeys = {"blacklistedPresetsFromRandomDistribution", "blacklistedNpcs",
                                                 "blacklistedNpcsPluginFemale", "blacklistedNpcsPluginMale",
@@ -5267,6 +6468,10 @@ bool CheckIfChangesNeeded(const std::string& originalJson,
                                                 "outfitsForceRefit"};
 
     if (currentBlacklistedPresetsShowValue != newBlacklistedPresetsShowValue) {
+        return true;
+    }
+
+    if (!npcFormIDProcessedData.isEmpty()) {
         return true;
     }
 
@@ -5289,6 +6494,7 @@ bool CheckIfChangesNeeded(const std::string& originalJson,
 
 std::tuple<bool, std::string, bool> ReadCompleteJson(const fs::path& jsonPath,
                                                       std::map<std::string, OrderedPluginData>& processedData,
+                                                      NpcFormIDData& npcFormIDProcessedData,
                                                       std::ofstream& logFile) {
     try {
         if (!fs::exists(jsonPath)) {
@@ -5310,17 +6516,220 @@ std::tuple<bool, std::string, bool> ReadCompleteJson(const fs::path& jsonPath,
             return {false, "", true};
         }
 
-        const std::vector<std::string> validKeys = {"npcFormID",       "npc",           "factionFemale", "factionMale",
-                                                    "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+        const std::vector<std::string> validKeys = {"npc", "factionFemale", "factionMale",
+                                                    "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"};
+
+        const std::vector<std::string> pluginArrayKeys = {
+            "blacklistedNpcsFormID",
+            "blacklistedOutfitsFromORefitFormID",
+            "outfitsForceRefitFormID"
+        };
 
         const std::vector<std::string> arrayKeys = {"blacklistedPresetsFromRandomDistribution", "blacklistedNpcs",
-                                                     "blacklistedNpcsFormID", "blacklistedNpcsPluginFemale",
-                                                     "blacklistedNpcsPluginMale", "blacklistedRacesFemale",
-                                                     "blacklistedRacesMale", "blacklistedOutfitsFromORefitFormID",
+                                                     "blacklistedNpcsPluginFemale", "blacklistedNpcsPluginMale",
+                                                     "blacklistedRacesFemale", "blacklistedRacesMale",
                                                      "blacklistedOutfitsFromORefit", "blacklistedOutfitsFromORefitPlugin",
-                                                     "outfitsForceRefitFormID", "outfitsForceRefit"};
+                                                     "outfitsForceRefit"};
+
+        size_t npcFormIDPos = jsonContent.find("\"npcFormID\"");
+        if (npcFormIDPos != std::string::npos) {
+            size_t colonPos = jsonContent.find(":", npcFormIDPos);
+            if (colonPos != std::string::npos) {
+                size_t openBrace = jsonContent.find("{", colonPos);
+                if (openBrace != std::string::npos) {
+                    int braceCount = 1;
+                    size_t pos = openBrace + 1;
+                    size_t closeBrace = std::string::npos;
+                    bool inString = false;
+                    bool escape = false;
+
+                    while (pos < jsonContent.length() && braceCount > 0) {
+                        char c = jsonContent[pos];
+
+                        if (c == '"' && !escape) {
+                            inString = !inString;
+                        } else if (!inString) {
+                            if (c == '{') {
+                                braceCount++;
+                            } else if (c == '}') {
+                                braceCount--;
+                                if (braceCount == 0) {
+                                    closeBrace = pos;
+                                    break;
+                                }
+                            }
+                        }
+
+                        escape = (c == '\\' && !escape);
+                        pos++;
+                    }
+
+                    if (closeBrace != std::string::npos) {
+                        std::string npcFormIDContent = jsonContent.substr(openBrace + 1, closeBrace - openBrace - 1);
+                        
+                        size_t pluginPos = 0;
+                        while (pluginPos < npcFormIDContent.length()) {
+                            pluginPos = npcFormIDContent.find("\"", pluginPos);
+                            if (pluginPos == std::string::npos) break;
+
+                            size_t pluginStart = pluginPos + 1;
+                            size_t pluginEnd = npcFormIDContent.find("\"", pluginStart);
+                            if (pluginEnd == std::string::npos) break;
+
+                            std::string plugin = npcFormIDContent.substr(pluginStart, pluginEnd - pluginStart);
+
+                            size_t pluginColon = npcFormIDContent.find(":", pluginEnd);
+                            if (pluginColon == std::string::npos) break;
+
+                            size_t pluginOpenBrace = npcFormIDContent.find("{", pluginColon);
+                            if (pluginOpenBrace == std::string::npos) break;
+
+                            int pluginBraceCount = 1;
+                            size_t pluginBracePos = pluginOpenBrace + 1;
+                            size_t pluginCloseBrace = std::string::npos;
+                            bool pluginInString = false;
+                            bool pluginEscape = false;
+
+                            while (pluginBracePos < npcFormIDContent.length() && pluginBraceCount > 0) {
+                                char c = npcFormIDContent[pluginBracePos];
+
+                                if (c == '"' && !pluginEscape) {
+                                    pluginInString = !pluginInString;
+                                } else if (!pluginInString) {
+                                    if (c == '{') {
+                                        pluginBraceCount++;
+                                    } else if (c == '}') {
+                                        pluginBraceCount--;
+                                        if (pluginBraceCount == 0) {
+                                            pluginCloseBrace = pluginBracePos;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                pluginEscape = (c == '\\' && !pluginEscape);
+                                pluginBracePos++;
+                            }
+
+                            if (pluginCloseBrace != std::string::npos) {
+                                std::string formIDsContent = npcFormIDContent.substr(pluginOpenBrace + 1, pluginCloseBrace - pluginOpenBrace - 1);
+                                
+                                size_t formIDPos = 0;
+                                while (formIDPos < formIDsContent.length()) {
+                                    formIDPos = formIDsContent.find("\"", formIDPos);
+                                    if (formIDPos == std::string::npos) break;
+
+                                    size_t formIDStart = formIDPos + 1;
+                                    size_t formIDEnd = formIDsContent.find("\"", formIDStart);
+                                    if (formIDEnd == std::string::npos) break;
+
+                                    std::string formID = formIDsContent.substr(formIDStart, formIDEnd - formIDStart);
+
+                                    size_t formIDColon = formIDsContent.find(":", formIDEnd);
+                                    if (formIDColon == std::string::npos) break;
+
+                                    size_t formIDOpenBracket = formIDsContent.find("[", formIDColon);
+                                    if (formIDOpenBracket == std::string::npos) break;
+
+                                    int bracketCount = 1;
+                                    size_t bracketPos = formIDOpenBracket + 1;
+                                    size_t formIDCloseBracket = std::string::npos;
+                                    bool bracketInString = false;
+                                    bool bracketEscape = false;
+
+                                    while (bracketPos < formIDsContent.length() && bracketCount > 0) {
+                                        char c = formIDsContent[bracketPos];
+
+                                        if (c == '"' && !bracketEscape) {
+                                            bracketInString = !bracketInString;
+                                        } else if (!bracketInString) {
+                                            if (c == '[') {
+                                                bracketCount++;
+                                            } else if (c == ']') {
+                                                bracketCount--;
+                                                if (bracketCount == 0) {
+                                                    formIDCloseBracket = bracketPos;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        bracketEscape = (c == '\\' && !bracketEscape);
+                                        bracketPos++;
+                                    }
+
+                                    if (formIDCloseBracket != std::string::npos) {
+                                        std::string presetsContent = formIDsContent.substr(formIDOpenBracket + 1, formIDCloseBracket - formIDOpenBracket - 1);
+                                        auto presets = parseArray(presetsContent);
+
+                                        for (const auto& preset : presets) {
+                                            npcFormIDProcessedData.addPresetToFormID(plugin, formID, preset);
+                                        }
+                                    }
+
+                                    formIDPos = formIDCloseBracket != std::string::npos ? formIDCloseBracket + 1 : formIDEnd + 1;
+                                }
+                            }
+
+                            pluginPos = pluginCloseBrace != std::string::npos ? pluginCloseBrace + 1 : pluginEnd + 1;
+                        }
+                    }
+                }
+            }
+        }
 
         for (const auto& key : validKeys) {
+            processedData[key] = OrderedPluginData();
+
+            size_t keyPos = jsonContent.find("\"" + key + "\"");
+            if (keyPos != std::string::npos) {
+                size_t colonPos = jsonContent.find(":", keyPos);
+                if (colonPos != std::string::npos) {
+                    size_t openBrace = jsonContent.find("{", colonPos);
+                    if (openBrace != std::string::npos) {
+                        int braceCount = 1;
+                        size_t pos = openBrace + 1;
+                        size_t closeBrace = std::string::npos;
+                        bool inString = false;
+                        bool escape = false;
+
+                        while (pos < jsonContent.length() && braceCount > 0) {
+                            char c = jsonContent[pos];
+
+                            if (c == '"' && !escape) {
+                                inString = !inString;
+                            } else if (!inString) {
+                                if (c == '{') {
+                                    braceCount++;
+                                } else if (c == '}') {
+                                    braceCount--;
+                                    if (braceCount == 0) {
+                                        closeBrace = pos;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            escape = (c == '\\' && !escape);
+                            pos++;
+                        }
+
+                        if (closeBrace != std::string::npos) {
+                            std::string keyContent = jsonContent.substr(openBrace + 1, closeBrace - openBrace - 1);
+                            auto orderedPlugins = parseOrderedPlugins(keyContent);
+
+                            for (const auto& p : orderedPlugins) {
+                                for (const auto& preset : p.second) {
+                                    processedData[key].addPreset(p.first, preset);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const auto& key : pluginArrayKeys) {
             processedData[key] = OrderedPluginData();
 
             size_t keyPos = jsonContent.find("\"" + key + "\"");
@@ -5444,6 +6853,9 @@ std::tuple<bool, std::string, bool> ReadCompleteJson(const fs::path& jsonPath,
         }
 
         logFile << "Loaded existing data from JSON:" << std::endl;
+        if (!npcFormIDProcessedData.isEmpty()) {
+            logFile << "  npcFormID: " << npcFormIDProcessedData.getTotalPresetCount() << " total entries" << std::endl;
+        }
         for (const auto& [key, data] : processedData) {
             size_t count = data.getTotalPresetCount();
             if (count > 0) {
@@ -5523,216 +6935,10 @@ bool WriteJsonAtomically(const fs::path& jsonPath, const std::string& content, c
     }
 }
 
-// ===== SPECIAL RULE APPLICATION FUNCTION =====
-
-bool ApplySpecialRules(std::map<std::string, OrderedPluginData>& processedData,
-                      const std::vector<SpecialRule>& specialRules,
-                      const PresetMapData& masterPresetMap,
-                      std::ofstream& logFile) {
-    
-    if (specialRules.empty()) {
-        return false;
-    }
-    
-    try {
-        logFile << std::endl;
-        logFile << "PHASE 3.5: Processing Special Rules (UBE races, Any races, Blacklists)..." << std::endl;
-        logFile << "----------------------------------------------------" << std::endl;
-        
-        int totalSpecialRulesProcessed = 0;
-        int totalSpecialRulesApplied = 0;
-        int totalSpecialRulesSkipped = 0;
-        int totalSpecialPresetsAdded = 0;
-        int totalSpecialPresetsRemoved = 0;
-        
-        for (const auto& rule : specialRules) {
-            totalSpecialRulesProcessed++;
-            
-            if (rule.targetKey.empty()) {
-                logFile << "  Skipped special rule (invalid target key): " << rule.ruleType << std::endl;
-                totalSpecialRulesSkipped++;
-                continue;
-            }
-            
-            bool shouldApply = false;
-            
-            if (rule.mode >= INIRuleMode::KEYWORD && rule.mode <= INIRuleMode::KEYHIMBO_REMOVE_ONCE) {
-                shouldApply = true;
-                
-                auto& data = processedData[rule.targetKey];
-                std::vector<std::string> matchingPresets;
-                std::vector<std::string> notFoundPresets;
-                
-                switch (rule.mode) {
-                    case INIRuleMode::KEYWORD:
-                    case INIRuleMode::KEYWORD_EXCLUSIVE:
-                    case INIRuleMode::KEYWORD_REMOVE:
-                    case INIRuleMode::KEYWORD_ONCE:
-                    case INIRuleMode::KEYWORD_EXCLUSIVE_ONCE:
-                    case INIRuleMode::KEYWORD_REMOVE_ONCE:
-                        matchingPresets = FindMatchingPresetsByKeyWord(masterPresetMap, rule.filterFragments, logFile);
-                        break;
-                        
-                    case INIRuleMode::KEYWORDCHART:
-                    case INIRuleMode::KEYWORDCHART_EXCLUSIVE:
-                    case INIRuleMode::KEYWORDCHART_REMOVE:
-                    case INIRuleMode::KEYWORDCHART_ONCE:
-                    case INIRuleMode::KEYWORDCHART_EXCLUSIVE_ONCE:
-                    case INIRuleMode::KEYWORDCHART_REMOVE_ONCE:
-                        matchingPresets = FindMatchingPresetsByKeyWordChart(masterPresetMap, rule.filterFragments, logFile);
-                        break;
-                        
-                    case INIRuleMode::KEYAUTHOR:
-                    case INIRuleMode::KEYAUTHOR_EXCLUSIVE:
-                    case INIRuleMode::KEYAUTHOR_REMOVE:
-                    case INIRuleMode::KEYAUTHOR_ONCE:
-                    case INIRuleMode::KEYAUTHOR_EXCLUSIVE_ONCE:
-                    case INIRuleMode::KEYAUTHOR_REMOVE_ONCE:
-                        matchingPresets = FindMatchingPresetsByKeyAuthor(masterPresetMap, rule.filterFragments, logFile);
-                        break;
-                        
-                    case INIRuleMode::KEYNORMAL:
-                    case INIRuleMode::KEYNORMAL_EXCLUSIVE:
-                    case INIRuleMode::KEYNORMAL_REMOVE:
-                    case INIRuleMode::KEYNORMAL_ONCE:
-                    case INIRuleMode::KEYNORMAL_EXCLUSIVE_ONCE:
-                    case INIRuleMode::KEYNORMAL_REMOVE_ONCE:
-                        matchingPresets = FindMatchingPresetsByFamily(masterPresetMap, rule.filterFragments, "KeyNormal", logFile, notFoundPresets);
-                        break;
-                        
-                    case INIRuleMode::KEYUBE:
-                    case INIRuleMode::KEYUBE_EXCLUSIVE:
-                    case INIRuleMode::KEYUBE_REMOVE:
-                    case INIRuleMode::KEYUBE_ONCE:
-                    case INIRuleMode::KEYUBE_EXCLUSIVE_ONCE:
-                    case INIRuleMode::KEYUBE_REMOVE_ONCE:
-                        matchingPresets = FindMatchingPresetsByFamily(masterPresetMap, rule.filterFragments, "KeyUBE", logFile, notFoundPresets);
-                        break;
-                        
-                    case INIRuleMode::KEYHIMBO:
-                    case INIRuleMode::KEYHIMBO_EXCLUSIVE:
-                    case INIRuleMode::KEYHIMBO_REMOVE:
-                    case INIRuleMode::KEYHIMBO_ONCE:
-                    case INIRuleMode::KEYHIMBO_EXCLUSIVE_ONCE:
-                    case INIRuleMode::KEYHIMBO_REMOVE_ONCE:
-                        matchingPresets = FindMatchingPresetsByFamily(masterPresetMap, rule.filterFragments, "KeyHIMBO", logFile, notFoundPresets);
-                        break;
-                        
-                    default:
-                        break;
-                }
-                
-                for (const auto& notFound : notFoundPresets) {
-                    logFile << "    WARNING: Special rule preset '" << notFound << "' not found in specified family - SKIPPED" << std::endl;
-                }
-                
-                if (!matchingPresets.empty()) {
-                    if (IsExclusiveMode(rule.mode)) {
-                        if (data.hasPlugin(rule.plugin)) {
-                            data.removePlugin(rule.plugin);
-                        }
-                        for (const auto& preset : matchingPresets) {
-                            data.addPreset(rule.plugin, preset);
-                            totalSpecialPresetsAdded++;
-                        }
-                        logFile << "  Applied special exclusive filtering: " << rule.ruleType 
-                                << " -> Target: " << rule.plugin << " -> Replaced with " 
-                                << matchingPresets.size() << " matching presets" << std::endl;
-                        
-                    } else if (IsRemovalMode(rule.mode)) {
-                        int removedCount = 0;
-                        for (const auto& preset : matchingPresets) {
-                            size_t beforeCount = data.getTotalPresetCount();
-                            data.removePreset(rule.plugin, preset);
-                            if (data.getTotalPresetCount() < beforeCount) {
-                                removedCount++;
-                                totalSpecialPresetsRemoved++;
-                            }
-                        }
-                        logFile << "  Applied special removal filtering: " << rule.ruleType 
-                                << " -> Target: " << rule.plugin << " -> Removed " 
-                                << removedCount << " matching presets" << std::endl;
-                        
-                    } else {
-                        int addedCount = 0;
-                        for (const auto& preset : matchingPresets) {
-                            size_t beforeCount = data.getTotalPresetCount();
-                            data.addPreset(rule.plugin, preset);
-                            if (data.getTotalPresetCount() > beforeCount) {
-                                addedCount++;
-                                totalSpecialPresetsAdded++;
-                            }
-                        }
-                        logFile << "  Applied special additive filtering: " << rule.ruleType 
-                                << " -> Target: " << rule.plugin << " -> Added " 
-                                << addedCount << " new matching presets" << std::endl;
-                    }
-                    
-                    totalSpecialRulesApplied++;
-                } else {
-                    logFile << "  No presets matched special filtering criteria: " << rule.ruleType 
-                            << " -> Target: " << rule.plugin << std::endl;
-                }
-                
-            } else if (rule.applyCount == -1 || rule.applyCount > 0) {
-                shouldApply = true;
-                
-                auto& data = processedData[rule.targetKey];
-                
-                int presetsAdded = 0;
-                for (const auto& preset : rule.presets) {
-                    size_t beforeCount = data.getTotalPresetCount();
-                    data.addPreset(rule.plugin, preset);
-                    if (data.getTotalPresetCount() > beforeCount) {
-                        presetsAdded++;
-                        totalSpecialPresetsAdded++;
-                    }
-                }
-                
-                if (presetsAdded > 0) {
-                    totalSpecialRulesApplied++;
-                    logFile << "  Applied special rule: " << rule.ruleType
-                            << " -> Target: " << rule.plugin << " -> Added "
-                            << presetsAdded << " new presets" << std::endl;
-                } else {
-                    logFile << "  No new presets added (all already exist): " << rule.ruleType
-                            << " -> Target: " << rule.plugin << std::endl;
-                }
-                
-            } else {
-                shouldApply = false;
-                totalSpecialRulesSkipped++;
-                logFile << "  Skipped special rule (count=0): " << rule.ruleType
-                        << " -> Target: " << rule.plugin << std::endl;
-            }
-        }
-        
-        logFile << std::endl;
-        logFile << "Special Rules Summary:" << std::endl;
-        logFile << "  Total special rules processed: " << totalSpecialRulesProcessed << std::endl;
-        logFile << "  Total special rules applied: " << totalSpecialRulesApplied << std::endl;
-        logFile << "  Total special rules skipped: " << totalSpecialRulesSkipped << std::endl;
-        logFile << "  Total special presets added: " << totalSpecialPresetsAdded << std::endl;
-        logFile << "  Total special presets removed: " << totalSpecialPresetsRemoved << std::endl;
-        logFile << std::endl;
-        
-        return (totalSpecialRulesApplied > 0);
-        
-    } catch (const std::exception& e) {
-        logFile << "ERROR in ApplySpecialRules: " << e.what() << std::endl;
-        return false;
-    } catch (...) {
-        logFile << "ERROR in ApplySpecialRules: Unknown exception" << std::endl;
-        return false;
-    }
-}
-
-// ===== MAIN PLUGIN FUNCTION =====
-
 extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface* skse) {
     try {
         SKSE::Init(skse);
-        
+
         std::string documentsPath;
         std::string gamePath;
 
@@ -5744,13 +6950,9 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
             gamePath = "";
         }
 
-        if (gamePath.empty() || documentsPath.empty()) {
-            return false;
-        }
-
-        fs::path dataPath = fs::path(gamePath) / "Data";
-        fs::path sksePluginsPath = dataPath / "SKSE" / "Plugins";
-        CreateDirectoryIfNotExists(sksePluginsPath);
+        fs::path dataPath;
+        fs::path sksePluginsPath;
+        bool pathDetectionSuccessful = false;
 
         fs::path logFilePath = fs::path(documentsPath) / "My Games" / "Skyrim Special Edition" / "SKSE" /
                                "OBody_NG_Preset_Distribution_Assistant-NG.log";
@@ -5764,16 +6966,141 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         localtime_s(&buf, &in_time_t);
 
         logFile << "====================================================" << std::endl;
-        logFile << "OBody NG Preset Distribution Assistant NG v" << PLUGIN_VERSION << std::endl;
+        logFile << "OBody NG Preset Distribution Assistant NG v2.4.9" << std::endl;
         logFile << "Log created on: " << std::put_time(&buf, "%Y-%m-%d %H:%M:%S") << std::endl;
         logFile << "====================================================" << std::endl << std::endl;
 
-        fs::path configIniPath = sksePluginsPath / "OBody_NG_Preset_Distribution_Assistant_NG.ini";
-        fs::path jsonOutputPath = sksePluginsPath / "OBody_presetDistributionConfig.json";
-        fs::path backupJsonPath =
-            sksePluginsPath / "Backup_OBody_DPA" / "OBody_presetDistributionConfig.json";
-        fs::path analysisDir = sksePluginsPath / "Backup_OBody_DPA" / "Analysis";
-        fs::path bodySlidePresetsPath = dataPath / "CalienteTools" / "BodySlide" / "SliderPresets";
+        logFile << "Searching for game installation..." << std::endl;
+        logFile << "----------------------------------------------------" << std::endl;
+
+        std::string mo2OverwritePath = GetEnvVar("MO_OVERWRITE_PATH");
+
+        if (!mo2OverwritePath.empty()) {
+            fs::path mo2Path = fs::path(mo2OverwritePath) / "SKSE" / "Plugins";
+            logFile << "Trying MO2 Overwrite path: " << mo2Path.string() << std::endl;
+
+            if (fs::exists(mo2Path)) {
+                if (IsValidPluginPath(mo2Path, logFile)) {
+                    sksePluginsPath = mo2Path;
+                    dataPath = fs::path(mo2OverwritePath);
+                    logFile << "Valid installation in MO2 Overwrite" << std::endl;
+                    pathDetectionSuccessful = true;
+                }
+            }
+        }
+
+        if (!pathDetectionSuccessful && !gamePath.empty()) {
+            fs::path standardPath = fs::path(gamePath) / "Data" / "SKSE" / "Plugins";
+            logFile << "Trying standard game path: " << standardPath.string() << std::endl;
+
+            if (fs::exists(standardPath)) {
+                if (IsValidPluginPath(standardPath, logFile)) {
+                    sksePluginsPath = standardPath;
+                    dataPath = fs::path(gamePath) / "Data";
+                    logFile << "Valid installation at standard game path" << std::endl;
+                    pathDetectionSuccessful = true;
+                } else {
+                    logFile << "Standard path exists but DLL not found" << std::endl;
+                }
+            } else {
+                logFile << "Standard path does not exist" << std::endl;
+            }
+        }
+
+        if (!pathDetectionSuccessful) {
+            logFile << std::endl;
+            logFile << "FALLBACK MODE: DLL Directory Detection" << std::endl;
+            logFile << "(Wabbajack/MO2 Portable/Nolvus/Non-standard)" << std::endl;
+            logFile << std::endl;
+
+            fs::path dllDir = GetDllDirectory(logFile);
+            
+            if (!dllDir.empty()) {
+                fs::path calculatedGamePath = dllDir.parent_path().parent_path().parent_path();
+                
+                logFile << "DLL directory detected: " << dllDir.string() << std::endl;
+                logFile << "Calculated game path: " << calculatedGamePath.string() << std::endl;
+                logFile << std::endl;
+                
+                dataPath = BuildPathCaseInsensitive(calculatedGamePath, {"Data"}, logFile);
+                sksePluginsPath = BuildPathCaseInsensitive(dataPath, {"SKSE", "Plugins"}, logFile);
+                
+                if (IsValidPluginPath(sksePluginsPath, logFile)) {
+                    logFile << std::endl;
+                    logFile << "DLL directory method successful" << std::endl;
+                    logFile << std::endl;
+                    pathDetectionSuccessful = true;
+                }
+            }
+        }
+
+        if (!pathDetectionSuccessful) {
+            logFile << std::endl;
+            logFile << "CRITICAL ERROR: NO VALID PATH DETECTED" << std::endl;
+            logFile << std::endl;
+            logFile << "All detection methods failed:" << std::endl;
+            logFile << "  METHOD 1 (MO2 Variables): FAILED" << std::endl;
+            logFile << "  METHOD 2 (Registry/Standard): " << (gamePath.empty() ? "FAILED (empty)" : "FAILED (DLL not found)") << std::endl;
+            logFile << "  METHOD 3 (DLL Directory): FAILED" << std::endl;
+            logFile << std::endl;
+            logFile << "POSSIBLE SOLUTIONS:" << std::endl;
+            logFile << "1. Reinstall OBody NG and this plugin" << std::endl;
+            logFile << "2. Run SKSE through Mod Organizer 2 if using MO2" << std::endl;
+            logFile << "3. For Wabbajack/Nolvus: Ensure the DLL is in Data/SKSE/Plugins/" << std::endl;
+            logFile << "4. Check mod installation in your mod manager" << std::endl;
+            logFile << "5. Verify Skyrim SE is properly installed" << std::endl;
+            logFile << std::endl;
+            logFile << "====================================================" << std::endl;
+            logFile.close();
+
+            return false;
+        }
+
+        logFile << std::endl;
+        logFile << "SUCCESS: Paths detected successfully" << std::endl;
+        logFile << "Data path: " << dataPath.string() << std::endl;
+        logFile << "SKSE Plugins path: " << sksePluginsPath.string() << std::endl;
+        logFile << std::endl;
+
+        CreateDirectoryIfNotExists(sksePluginsPath);
+
+        fs::path configIniPath;
+        fs::path tempConfigPath;
+        
+        if (FindFileWithFallback(sksePluginsPath, "OBody_NG_Preset_Distribution_Assistant_NG.ini", 
+                                 tempConfigPath, logFile)) {
+            configIniPath = tempConfigPath;
+        } else {
+            configIniPath = sksePluginsPath / "OBody_NG_Preset_Distribution_Assistant_NG.ini";
+        }
+        
+        fs::path jsonOutputPath;
+        fs::path tempJsonPath;
+        
+        if (FindFileWithFallback(sksePluginsPath, "OBody_presetDistributionConfig.json", 
+                                 tempJsonPath, logFile)) {
+            jsonOutputPath = tempJsonPath;
+        } else {
+            jsonOutputPath = sksePluginsPath / "OBody_presetDistributionConfig.json";
+        }
+        
+        fs::path backupJsonPath = BuildPathCaseInsensitive(
+            sksePluginsPath, 
+            {"Backup_OBody_DPA"}, 
+            logFile
+        ) / "OBody_presetDistributionConfig.json";
+        
+        fs::path analysisDir = BuildPathCaseInsensitive(
+            sksePluginsPath, 
+            {"Backup_OBody_DPA", "Analysis"}, 
+            logFile
+        );
+        
+        fs::path bodySlidePresetsPath = BuildPathCaseInsensitive(
+            dataPath, 
+            {"CalienteTools", "BodySlide", "SliderPresets"}, 
+            logFile
+        );
 
         logFile << "Reading configuration..." << std::endl;
         logFile << "----------------------------------------------------" << std::endl;
@@ -5782,8 +7109,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         logFile << std::endl;
         if (!PerformSimpleJsonIntegrityCheck(jsonOutputPath, logFile)) {
             logFile << std::endl;
-            logFile << "CRITICAL: JSON failed simple integrity check at startup - Attempting to restore "
-                       "from backup..."
+            logFile << "CRITICAL: JSON failed simple integrity check at startup - Attempting to restore from backup..."
                     << std::endl;
 
             if (RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
@@ -5791,16 +7117,14 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
                         << std::endl;
             } else {
                 logFile << std::endl;
-                logFile << "CRITICAL ERROR: Could not restore from backup. The JSON file is likely "
-                           "corrupted and no valid backup is available."
+                logFile << "CRITICAL ERROR: Could not restore from backup. The JSON file is likely corrupted and no valid backup is available."
                         << std::endl;
                 logFile << "Process terminated to prevent further damage." << std::endl;
                 logFile << std::endl;
                 logFile << "RECOMMENDED ACTIONS:" << std::endl;
                 logFile << "1. Check the analysis folder for the corrupted file: " << analysisDir.string()
                         << std::endl;
-                logFile << "2. Manually check for any older backups or reinstall the mod providing the "
-                           "base JSON file."
+                logFile << "2. Manually check for any older backups or reinstall the mod providing the base JSON file."
                         << std::endl;
                 logFile << "3. Contact the mod author if the problem persists." << std::endl;
                 logFile << "====================================================" << std::endl;
@@ -5815,10 +7139,12 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         logFile << std::endl;
 
         const std::set<std::string> validKeys = {
-            "npcFormID",       "npc",           "factionFemale", "factionMale",
-            "npcPluginFemale", "npcPluginMale", "raceFemale",    "raceMale"};
+            "npc", "factionFemale", "factionMale",
+            "npcPluginFemale", "npcPluginMale", "raceFemale", "raceMale"};
 
         std::map<std::string, OrderedPluginData> processedData;
+        NpcFormIDData npcFormIDProcessedData;
+        
         for (const auto& key : validKeys) {
             processedData[key] = OrderedPluginData();
         }
@@ -5861,23 +7187,22 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         logFile << std::endl;
 
         auto [readSuccess, originalJsonContent, currentBlacklistedPresetsShow] = 
-            ReadCompleteJson(jsonOutputPath, processedData, logFile);
+            ReadCompleteJson(jsonOutputPath, processedData, npcFormIDProcessedData, logFile);
 
         if (!readSuccess) {
             logFile << "JSON read failed, attempting to restore from backup..." << std::endl;
             if (fs::exists(backupJsonPath) &&
                 RestoreJsonFromBackup(backupJsonPath, jsonOutputPath, analysisDir, logFile)) {
                 logFile << "Backup restoration successful, retrying JSON read..." << std::endl;
-                auto retryResult = ReadCompleteJson(jsonOutputPath, processedData, logFile);
+                auto retryResult = ReadCompleteJson(jsonOutputPath, processedData, npcFormIDProcessedData, logFile);
                 readSuccess = std::get<0>(retryResult);
                 originalJsonContent = std::get<1>(retryResult);
                 currentBlacklistedPresetsShow = std::get<2>(retryResult);
             }
 
             if (!readSuccess) {
-                logFile
-                    << "Process truncated due to JSON read error. No INI processing or updates performed."
-                    << std::endl;
+                logFile << "Process truncated due to JSON read error. No INI processing or updates performed."
+                        << std::endl;
                 logFile << "====================================================" << std::endl;
                 logFile.close();
 
@@ -5931,126 +7256,259 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         int totalPluginsRemoved = 0;
         int totalFilesProcessed = 0;
         int totalFilteringRulesApplied = 0;
+        int totalNpcFormIDRulesProcessed = 0;
         std::vector<SpecialRule> specialRules;
         RuleConflictTracker conflictTracker;
         std::vector<RuleWithPriority> allRulesToApply;
 
         logFile << "Scanning for OBodyNG_PDA_*.ini files..." << std::endl;
-        logFile << "----------------------------------------------------" << std::endl;
+        logFile << "Primary path: " << dataPath.string() << std::endl;
+        logFile << std::endl;
+        
+        std::vector<fs::path> iniFilesToProcess;
+        
+        if (fs::exists(dataPath) && fs::is_directory(dataPath)) {
+            logFile << "Scanning primary path for INIs..." << std::endl;
+            
+            try {
+                for (const auto& entry : fs::directory_iterator(dataPath)) {
+                    try {
+                        if (entry.is_regular_file()) {
+                            std::string filename = entry.path().filename().string();
+                            std::string lowerFilename = filename;
+                            std::transform(lowerFilename.begin(), lowerFilename.end(), 
+                                         lowerFilename.begin(), ::tolower);
+                            
+                            if (lowerFilename.find("obodyng_pda_") == 0 && 
+                                lowerFilename.find(".ini") != std::string::npos) {
+                                iniFilesToProcess.push_back(entry.path());
+                                logFile << "  Found INI: " << filename << std::endl;
+                            }
+                        }
+                    } catch (...) {
+                        continue;
+                    }
+                }
+            } catch (...) {
+                logFile << "Error scanning primary path for INIs" << std::endl;
+            }
+        }
+        
+        if (iniFilesToProcess.empty()) {
+            logFile << "No INIs found in primary path, trying fallback with double backslash..." << std::endl;
+            
+            std::string dataPathStr = dataPath.string();
+            if (!dataPathStr.empty() && dataPathStr.back() != '\\') {
+                dataPathStr += '\\';
+            }
+            dataPathStr += '\\';
+            
+            try {
+                fs::path fallbackPath(dataPathStr);
+                
+                if (fs::exists(fallbackPath) && fs::is_directory(fallbackPath)) {
+                    logFile << "Fallback path exists: " << fallbackPath.string() << std::endl;
+                    
+                    for (const auto& entry : fs::directory_iterator(fallbackPath)) {
+                        try {
+                            if (entry.is_regular_file()) {
+                                std::string filename = entry.path().filename().string();
+                                std::string lowerFilename = filename;
+                                std::transform(lowerFilename.begin(), lowerFilename.end(), 
+                                             lowerFilename.begin(), ::tolower);
+                                
+                                if (lowerFilename.find("obodyng_pda_") == 0 && 
+                                    lowerFilename.find(".ini") != std::string::npos) {
+                                    iniFilesToProcess.push_back(entry.path());
+                                    logFile << "  Found INI (fallback): " << filename << std::endl;
+                                }
+                            }
+                        } catch (...) {
+                            continue;
+                        }
+                    }
+                } else {
+                    logFile << "Fallback path does not exist" << std::endl;
+                }
+            } catch (const std::exception& e) {
+                logFile << "Fallback search failed: " << e.what() << std::endl;
+            } catch (...) {
+                logFile << "Fallback search failed: Unknown error" << std::endl;
+            }
+        }
+        
+        if (iniFilesToProcess.empty()) {
+            logFile << std::endl;
+            logFile << "No INI files found. Process will continue with existing JSON data." << std::endl;
+            logFile << std::endl;
+        } else {
+            logFile << std::endl;
+            logFile << "Total INI files found: " << iniFilesToProcess.size() << std::endl;
+            logFile << std::endl;
+            
+            for (const auto& iniPath : iniFilesToProcess) {
+                try {
+                    std::string filename = iniPath.filename().string();
+                    logFile << std::endl << "Reading file: " << filename << std::endl;
+                    totalFilesProcessed++;
 
-        try {
-            for (const auto& entry : fs::directory_iterator(dataPath)) {
-                if (entry.is_regular_file()) {
-                    std::string filename = entry.path().filename().string();
-                    if (StartsWith(filename, "OBodyNG_PDA_") && EndsWith(filename, ".ini")) {
-                        logFile << std::endl << "Reading file: " << filename << std::endl;
-                        totalFilesProcessed++;
+                    std::string iniContent = ReadFileWithEncoding(iniPath);
+                    if (iniContent.empty()) {
+                        logFile << "  ERROR: Could not read file or file is empty" << std::endl;
+                        continue;
+                    }
 
-                        std::string iniContent = ReadFileWithEncoding(entry.path());
-                        if (iniContent.empty()) {
-                            logFile << "  ERROR: Could not read file or file is empty" << std::endl;
+                    size_t totalLines = std::count(iniContent.begin(), iniContent.end(), '\n');
+                    logFile << "  File size: " << iniContent.size() << " bytes, " 
+                            << totalLines << " lines detected" << std::endl;
+
+                    std::stringstream iniStream(iniContent);
+                    std::string line;
+                    int rulesInFile = 0;
+                    int specialRulesInFile = 0;
+
+                    while (std::getline(iniStream, line)) {
+                        std::string originalLine = line;
+
+                        if (line.size() > 10000) {
+                            logFile << "  WARNING: Skipping abnormally long line (" 
+                                    << line.size() << " chars)" << std::endl;
                             continue;
                         }
 
-                        size_t totalLines = std::count(iniContent.begin(), iniContent.end(), '\n');
-                        logFile << "  File size: " << iniContent.size() << " bytes, " 
-                                << totalLines << " lines detected" << std::endl;
+                        while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || 
+                               line.back() == '\r' || line.back() == '\n')) {
+                            line.pop_back();
+                        }
 
-                        std::stringstream iniStream(iniContent);
-                        std::string line;
-                        int rulesInFile = 0;
-                        int specialRulesInFile = 0;
+                        line = RemoveCommentsSafely(line);
 
-                        while (std::getline(iniStream, line)) {
-                            std::string originalLine = line;
+                        size_t equalPos = line.find('=');
+                        if (equalPos != std::string::npos) {
+                            std::string key = Trim(line.substr(0, equalPos));
+                            std::string value = Trim(line.substr(equalPos + 1));
 
-                            if (line.size() > 10000) {
-                                logFile << "  WARNING: Skipping abnormally long line (" 
-                                        << line.size() << " chars)" << std::endl;
+                            if (key == "npcFormID" && !value.empty()) {
+                                NpcFormIDRule npcRule = ParseNpcFormIDRuleLine(value, logFile);
+                                
+                                if (!npcRule.plugin.empty() && !npcRule.formID.empty()) {
+                                    if (npcRule.mode == INIRuleMode::EXCLUSIVE_ALWAYS) {
+                                        npcFormIDProcessedData.data[npcRule.plugin][npcRule.formID] = npcRule.presets;
+                                    } else if (npcRule.mode != INIRuleMode::DISABLED) {
+                                        for (const auto& preset : npcRule.presets) {
+                                            npcFormIDProcessedData.addPresetToFormID(npcRule.plugin, npcRule.formID, preset);
+                                        }
+                                    }
+                                    
+                                    totalNpcFormIDRulesProcessed++;
+                                    logFile << "  npcFormID rule: " << npcRule.plugin << " | FormID: " << npcRule.formID 
+                                            << " | Presets: " << npcRule.presets.size() << std::endl;
+                                }
                                 continue;
                             }
 
-                            while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || 
-                                   line.back() == '\r' || line.back() == '\n')) {
-                                line.pop_back();
+                            if (std::find(NPC_FORMID_TYPES.begin(), NPC_FORMID_TYPES.end(), key) != NPC_FORMID_TYPES.end() && !value.empty()) {
+                                SpecialRule specialRule = ParseFormIDRuleLine(key, value, logFile);
+                                if (!specialRule.targetKey.empty()) {
+                                    specialRules.push_back(specialRule);
+                                    specialRulesInFile++;
+                                    logFile << "  NPC FormID rule: " << key << " -> Plugin: " << specialRule.plugin << std::endl;
+                                }
+                                continue;
                             }
 
-                            line = RemoveCommentsSafely(line);
-
-                            size_t equalPos = line.find('=');
-                            if (equalPos != std::string::npos) {
-                                std::string key = Trim(line.substr(0, equalPos));
-                                std::string value = Trim(line.substr(equalPos + 1));
-
-                                if ((key == "raceFemaleUBE" || key == "raceMaleAny" || StartsWith(key, "blacklisted")) && !value.empty()) {
-                                    SpecialRule specialRule = ParseSpecialRuleLine(key, value);
-                                    
-                                    if (!specialRule.targetKey.empty()) {
-                                        specialRules.push_back(specialRule);
-                                        specialRulesInFile++;
-                                        
-                                        if (IsExclusiveMode(specialRule.mode)) {
-                                            conflictTracker.addExclusiveRule(specialRule.targetKey, specialRule.plugin, 
-                                                                            filename, entry.path(), originalLine, specialRule.mode);
-                                        }
-                                        
-                                        logFile << "  Special rule detected: " << key << " -> " << specialRule.targetKey
-                                                << " -> Plugin/Target: " << specialRule.plugin << std::endl;
-                                    } else {
-                                        logFile << "  ERROR: Invalid special rule: " << key << std::endl;
-                                    }
-                                    continue;
+                            if (std::find(OUTFIT_FORMID_TYPES.begin(), OUTFIT_FORMID_TYPES.end(), key) != OUTFIT_FORMID_TYPES.end() && !value.empty()) {
+                                SpecialRule specialRule = ParseFormIDRuleLine(key, value, logFile);
+                                if (!specialRule.targetKey.empty()) {
+                                    specialRules.push_back(specialRule);
+                                    specialRulesInFile++;
+                                    logFile << "  Outfit FormID rule: " << key << " -> Plugin: " << specialRule.plugin << std::endl;
                                 }
+                                continue;
+                            }
 
-                                if (validKeys.count(key) && !value.empty()) {
-                                    ParsedRule rule = ParseRuleLine(key, value);
+                            if (key == "outfits" && !value.empty()) {
+                                SpecialRule specialRule = ParseOutfitRuleLine(key, value);
+                                if (!specialRule.targetKey.empty()) {
+                                    specialRules.push_back(specialRule);
+                                    specialRulesInFile++;
+                                    logFile << "  Outfit array rule: " << specialRule.targetKey << std::endl;
+                                }
+                                continue;
+                            }
 
-                                    if (!rule.plugin.empty()) {
-                                        rulesInFile++;
-                                        totalRulesProcessed++;
-
-                                        RuleWithPriority ruleWithPriority;
-                                        ruleWithPriority.key = rule.key;
-                                        ruleWithPriority.plugin = rule.plugin;
-                                        ruleWithPriority.presets = rule.presets;
-                                        ruleWithPriority.extra = rule.extra;
-                                        ruleWithPriority.applyCount = rule.applyCount;
-                                        ruleWithPriority.mode = rule.mode;
-                                        ruleWithPriority.filterFragments = rule.filterFragments;
-                                        ruleWithPriority.originalLine = originalLine;
-                                        ruleWithPriority.iniPath = entry.path();
-                                        ruleWithPriority.priority = GetRulePriority(rule.mode);
-
-                                        if (IsExclusiveMode(rule.mode)) {
-                                            conflictTracker.addExclusiveRule(key, rule.plugin, filename, 
-                                                                            entry.path(), originalLine, rule.mode);
-                                        }
-
-                                        allRulesToApply.push_back(ruleWithPriority);
+                            if ((key == "raceFemaleUBE" || key == "raceMaleAny" || StartsWith(key, "blacklisted")) && !value.empty()) {
+                                SpecialRule specialRule = ParseSpecialRuleLine(key, value);
+                                
+                                if (!specialRule.targetKey.empty()) {
+                                    specialRules.push_back(specialRule);
+                                    specialRulesInFile++;
+                                    
+                                    if (IsExclusiveMode(specialRule.mode)) {
+                                        conflictTracker.addExclusiveRule(specialRule.targetKey, specialRule.plugin, 
+                                                                        filename, iniPath, originalLine, specialRule.mode);
                                     }
+                                    
+                                    logFile << "  Special rule detected: " << key << " -> " << specialRule.targetKey
+                                            << " -> Plugin/Target: " << specialRule.plugin << std::endl;
+                                } else {
+                                    logFile << "  ERROR: Invalid special rule: " << key << std::endl;
+                                }
+                                continue;
+                            }
+
+                            if (validKeys.count(key) && !value.empty()) {
+                                ParsedRule rule = ParseRuleLine(key, value);
+
+                                if (!rule.plugin.empty()) {
+                                    rulesInFile++;
+                                    totalRulesProcessed++;
+
+                                    RuleWithPriority ruleWithPriority;
+                                    ruleWithPriority.key = rule.key;
+                                    ruleWithPriority.plugin = rule.plugin;
+                                    ruleWithPriority.presets = rule.presets;
+                                    ruleWithPriority.extra = rule.extra;
+                                    ruleWithPriority.applyCount = rule.applyCount;
+                                    ruleWithPriority.mode = rule.mode;
+                                    ruleWithPriority.filterFragments = rule.filterFragments;
+                                    ruleWithPriority.originalLine = originalLine;
+                                    ruleWithPriority.iniPath = iniPath;
+                                    ruleWithPriority.priority = GetRulePriority(rule.mode);
+
+                                    if (IsExclusiveMode(rule.mode)) {
+                                        conflictTracker.addExclusiveRule(key, rule.plugin, filename, 
+                                                                        iniPath, originalLine, rule.mode);
+                                    }
+
+                                    allRulesToApply.push_back(ruleWithPriority);
                                 }
                             }
                         }
-
-                        logFile << "  Rules in file: " << rulesInFile
-                                << " | Special rules: " << specialRulesInFile << std::endl;
                     }
+
+                    logFile << "  Rules in file: " << rulesInFile
+                            << " | Special rules: " << specialRulesInFile << std::endl;
+                            
+                } catch (const std::exception& e) {
+                    logFile << "ERROR processing INI file: " << e.what() << std::endl;
+                } catch (...) {
+                    logFile << "ERROR processing INI file: Unknown exception" << std::endl;
                 }
             }
-        } catch (const std::exception& e) {
-            logFile << "ERROR scanning directory: " << e.what() << std::endl;
         }
 
         logFile << std::endl;
         logFile << "Total rules collected: " << allRulesToApply.size() << std::endl;
+        logFile << "Total npcFormID rules processed: " << totalNpcFormIDRulesProcessed << std::endl;
         logFile << "Sorting rules by priority..." << std::endl;
         logFile << std::endl;
 
-        std::sort(allRulesToApply.begin(), allRulesToApply.end(), 
+        std::stable_sort(allRulesToApply.begin(), allRulesToApply.end(), 
             [](const RuleWithPriority& a, const RuleWithPriority& b) {
                 return a.priority < b.priority;
             });
-
+        
         ConflictResolution conflictResolution = ResolveConflicts(conflictTracker, config.conflictSmartResolution, logFile);
         
         GenerateConflictReport(conflictTracker, conflictResolution, config.conflictSmartResolution, logINIAnalysisPath, logFile);
@@ -6397,6 +7855,7 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
         logFile << "Total .ini files processed: " << totalFilesProcessed << std::endl;
         logFile << "Total rules processed: " << totalRulesProcessed << std::endl;
+        logFile << "Total npcFormID rules processed: " << totalNpcFormIDRulesProcessed << std::endl;
         logFile << "Total rules applied: " << totalRulesApplied << std::endl;
         logFile << "Total filtering rules applied: " << totalFilteringRulesApplied << std::endl;
         logFile << "Total special rules detected: " << specialRules.size() << std::endl;
@@ -6422,6 +7881,10 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
         }
         logFile << std::endl << "Final data in JSON:" << std::endl;
 
+        if (!npcFormIDProcessedData.isEmpty()) {
+            logFile << "  npcFormID: " << npcFormIDProcessedData.getTotalPresetCount() << " total entries" << std::endl;
+        }
+        
         for (const auto& [key, data] : processedData) {
             size_t count = data.getTotalPresetCount();
             if (count > 0) {
@@ -6436,10 +7899,10 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
 
         try {
             std::string updatedJsonContent =
-                PreserveOriginalSections(originalJsonContent, processedData, 
+                PreserveOriginalSections(originalJsonContent, processedData, npcFormIDProcessedData,
                                         currentBlacklistedPresetsShow, config.modeUBE, logFile);
 
-            if (CheckIfChangesNeeded(originalJsonContent, processedData, 
+            if (CheckIfChangesNeeded(originalJsonContent, processedData, npcFormIDProcessedData,
                                     currentBlacklistedPresetsShow, config.modeUBE)) {
                 logFile << "Changes detected. Proceeding with atomic write..." << std::endl;
 
@@ -6513,14 +7976,24 @@ extern "C" __declspec(dllexport) bool SKSEPlugin_Load(const SKSE::LoadInterface*
             }
         }
 
-        logFile << std::endl
-                << "Process completed successfully with priority system: 1=Basic | 2=Additive | 3=Removal | 4=Exclusive"
-                << std::endl;
-        logFile << "All KeyNormal/KeyUBE/KeyHIMBO modes functional. Conflict resolution with newest INI priority."
-                << std::endl;
-        logFile << "HTML entity detection enabled for INI comments (&apos; etc.)"
-                << std::endl;
+        logFile << std::endl;
         logFile << "====================================================" << std::endl;
+        logFile << "PROCESS COMPLETED SUCCESSFULLY - v2.4.9" << std::endl;
+        logFile << "====================================================" << std::endl;
+        logFile << std::endl;
+        logFile << "Plugin loaded at: " << std::put_time(&buf, "%Y-%m-%d %H:%M:%S") << std::endl;
+        logFile << std::endl;
+        logFile << "Installation Details:" << std::endl;
+        logFile << "  Data path: " << dataPath.string() << std::endl;
+        logFile << "  JSON output: " << jsonOutputPath.string() << std::endl;
+        logFile << "  Backup folder: " << backupJsonPath.parent_path().string() << std::endl;
+        logFile << std::endl;
+        logFile << "For help and documentation, visit:" << std::endl;
+        logFile << "  https://john95ac.github.io/website-documents-John95AC/" << std::endl;
+        logFile << std::endl;
+        logFile << "All systems operational. OBody NG is ready." << std::endl;
+        logFile << "====================================================" << std::endl;
+        logFile << std::endl;
         logFile.close();
         
         return true;
